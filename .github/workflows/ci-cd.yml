@@ -1,0 +1,90 @@
+name: CodeGuardian AI Production CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  lint-and-test:
+    name: Code Quality & Unit Testing
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Backend Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install flake8 pytest
+
+      - name: Run Backend Syntax & Import Compilation Check
+        run: |
+          python -m compileall backend/app
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Frontend Dependencies & Lint
+        run: |
+          cd frontend
+          npm ci
+          npm run lint
+
+  docker-build-and-scan:
+    name: Docker Image Build & Security Scan
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Build Backend Docker Image
+        run: |
+          docker build -t codeguardian-backend:${{ github.sha }} ./backend
+
+      - name: Build Frontend Docker Image
+        run: |
+          docker build -t codeguardian-frontend:${{ github.sha }} ./frontend
+
+      - name: Run Trivy Vulnerability Scanner on Backend Image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'codeguardian-backend:${{ github.sha }}'
+          format: 'table'
+          exit-code: '0'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+  deploy:
+    name: Production Server Rollout
+    needs: docker-build-and-scan
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Execute Remote SSH Production Rollout
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_SERVER_HOST }}
+          username: ${{ secrets.PROD_SERVER_USER }}
+          key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/codeguardian-ai
+            git pull origin main
+            docker compose -f docker-compose.yml up --build -d
+            docker system prune -f

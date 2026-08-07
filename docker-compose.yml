@@ -3,34 +3,34 @@ version: '3.8'
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: codeguardian_postgres
+    container_name: codeguardian-postgres
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-codeguardian}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-codeguardian_pass}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-securepassword123}
       POSTGRES_DB: ${POSTGRES_DB:-codeguardian_db}
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-codeguardian} -d ${POSTGRES_DB:-codeguardian_db}"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: codeguardian_redis
+    container_name: codeguardian-redis
     restart: always
-    ports:
-      - "6379:6379"
+    command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
+    ports:
+      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
 
@@ -38,43 +38,64 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: codeguardian_backend
+    container_name: codeguardian-backend
     restart: always
-    ports:
-      - "8000:8000"
     environment:
-      - ENVIRONMENT=development
-      - DEBUG=True
-      - POSTGRES_SERVER=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_USER=${POSTGRES_USER:-codeguardian}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-codeguardian_pass}
-      - POSTGRES_DB=${POSTGRES_DB:-codeguardian_db}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      DATABASE_URI: postgresql+asyncpg://${POSTGRES_USER:-codeguardian}:${POSTGRES_PASSWORD:-securepassword123}@postgres:5432/${POSTGRES_DB:-codeguardian_db}
+      REDIS_URI: redis://redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-super_secret_production_key_codeguardian_32_bytes}
+      ENVIRONMENT: production
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/api/v1/health\")'"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+    ports:
+      - "8000:8000"
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: codeguardian_frontend
+    container_name: codeguardian-frontend
     restart: always
-    ports:
-      - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      NEXT_PUBLIC_API_URL: http://localhost/api
     depends_on:
       - backend
+    ports:
+      - "3000:3000"
+
+  nginx:
+    image: nginx:alpine
+    container_name: codeguardian-nginx
+    restart: always
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - frontend
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: codeguardian-prometheus
+    restart: always
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: codeguardian-grafana
+    restart: always
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
 
 volumes:
   postgres_data:
