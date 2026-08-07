@@ -1,14 +1,13 @@
 import uuid
-import math
-from datetime import datetime, timezone
-from typing import Dict, List, Any
+from datetime import UTC, datetime
+from typing import Any
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Repository, CodeReview, AuditLog
-from app.schemas.code_review import CodeReviewResponse, ReviewIssueItem
-from app.exceptions.base import NotFoundException
 from app.core.logging import get_logger
+from app.exceptions.base import NotFoundException
+from app.models import AuditLog, CodeReview, Repository
 
 logger = get_logger(__name__)
 
@@ -22,7 +21,7 @@ class CodeReviewService:
             raise NotFoundException("Repository not found.")
 
         # Analyzed Issues List across Semgrep, SonarQube, Bandit, ESLint, Pylint
-        issues: List[Dict[str, Any]] = [
+        issues: list[dict[str, Any]] = [
             {
                 "id": "semgrep-01",
                 "tool": "Semgrep",
@@ -153,7 +152,7 @@ class CodeReviewService:
             naming_violations_count=naming_violations_count,
             code_smells_count=code_smells_count,
             issues=issues,
-            reviewed_at=datetime.now(timezone.utc),
+            reviewed_at=datetime.now(UTC),
         )
 
         db.add(review)

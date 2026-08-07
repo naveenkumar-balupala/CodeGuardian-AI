@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ShieldCheck, Search, Bell, Building2, User, LogOut, Layers, Code, ShieldAlert, FileText, MessageSquare, LayoutDashboard } from 'lucide-react';
+import { ShieldCheck, Search, Bell, Building2, User, LogOut, Layers, Code, ShieldAlert, FileText, MessageSquare, LayoutDashboard, FolderGit2 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 
 export const DashboardHeader: React.FC = () => {
@@ -9,6 +9,7 @@ export const DashboardHeader: React.FC = () => {
 
   const navItems = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { label: 'Repositories', href: '/repositories', icon: FolderGit2 },
     { label: 'Code Review', href: '/code-review', icon: Code },
     { label: 'Security Agent', href: '/security-agent', icon: ShieldAlert },
     { label: 'Architecture', href: '/architecture', icon: Layers },

@@ -1,28 +1,29 @@
-from datetime import datetime, timedelta, timezone
-from typing import List
-from sqlalchemy import select, func
+from datetime import UTC, datetime, timedelta
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import (
+    AuditLog,
+    Finding,
+    FindingHistory,
+    FindingStatus,
     Repository,
     Scan,
     ScanStatus,
-    Finding,
     SeverityLevel,
-    FindingStatus,
-    FindingHistory,
-    AuditLog,
 )
 from app.schemas.dashboard import (
+    ActivityItem,
     DashboardSummaryResponse,
+    NotificationAlert,
     ProjectScoreMetric,
-    SeverityBreakdown,
     RepositorySummary,
     ReviewHistoryItem,
     SecurityTrendPoint,
-    ActivityItem,
-    NotificationAlert,
+    SeverityBreakdown,
 )
+
 
 class DashboardService:
     """Service providing aggregated security metrics and dashboard analytics."""
@@ -37,7 +38,7 @@ class DashboardService:
             Finding.is_deleted == False,
             Finding.status.in_([FindingStatus.OPEN, FindingStatus.IN_REVIEW])
         ).group_by(Finding.severity)
-        
+
         result_sev = await db.execute(query_sev)
         sev_map = {row[0]: row[1] for row in result_sev.all()}
 
@@ -51,7 +52,7 @@ class DashboardService:
         # 2. Calculate Project Health Score (100 - weighted vulnerability penalties)
         score_penalty = (critical_cnt * 15) + (high_cnt * 7) + (med_cnt * 2) + (low_cnt * 1)
         calc_score = max(0, min(100, 100 - score_penalty))
-        
+
         if calc_score >= 90:
             grade = "A+"
             status_label = "Optimal Security Posture"
@@ -73,7 +74,7 @@ class DashboardService:
         result_repos = await db.execute(query_repos)
         repos_list = result_repos.scalars().all()
 
-        repos_summary: List[RepositorySummary] = []
+        repos_summary: list[RepositorySummary] = []
         for r in repos_list:
             repos_summary.append(
                 RepositorySummary(
@@ -104,7 +105,7 @@ class DashboardService:
         result_history = await db.execute(query_history)
         history_records = result_history.scalars().all()
 
-        review_history: List[ReviewHistoryItem] = []
+        review_history: list[ReviewHistoryItem] = []
         for h in history_records:
             review_history.append(
                 ReviewHistoryItem(
@@ -121,8 +122,8 @@ class DashboardService:
             )
 
         # 6. Generate 30-Day Trend Chart Points
-        today = datetime.now(timezone.utc)
-        trends: List[SecurityTrendPoint] = []
+        today = datetime.now(UTC)
+        trends: list[SecurityTrendPoint] = []
         for i in range(6, -1, -1):
             dt = today - timedelta(days=i * 5)
             trends.append(
@@ -140,7 +141,7 @@ class DashboardService:
         result_audit = await db.execute(query_audit)
         audit_logs = result_audit.scalars().all()
 
-        activities: List[ActivityItem] = []
+        activities: list[ActivityItem] = []
         for a in audit_logs:
             activities.append(
                 ActivityItem(

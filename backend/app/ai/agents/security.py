@@ -1,4 +1,5 @@
-from typing import Dict, Any
+from typing import Any
+
 from app.ai.agents.state import AgentState, SecurityAgentOutput
 from app.core.logging import get_logger
 
@@ -14,7 +15,7 @@ class SecurityAgent:
     """Security Agent scanning for SAST vulnerabilities and secret leaks."""
 
     @staticmethod
-    def sast_scan_tool() -> Dict[str, Any]:
+    def sast_scan_tool() -> dict[str, Any]:
         """Tool: Performs SAST rule checking and secret leakage verification."""
         return {
             "critical_vulnerabilities": 1,

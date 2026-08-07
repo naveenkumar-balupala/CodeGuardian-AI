@@ -1,4 +1,5 @@
-from typing import Dict, Any
+from typing import Any
+
 from app.ai.agents.state import AgentState, ArchitectureAgentOutput
 from app.core.logging import get_logger
 
@@ -14,7 +15,7 @@ class ArchitectureAgent:
     """Architecture Agent analyzing code layout and structural isolation."""
 
     @staticmethod
-    def audit_architecture_tool() -> Dict[str, Any]:
+    def audit_architecture_tool() -> dict[str, Any]:
         """Tool: Audits import coupling and layered monolith structure."""
         return {
             "pattern": "MONOREPO",

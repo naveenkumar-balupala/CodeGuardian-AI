@@ -1,4 +1,3 @@
-from typing import Dict, Any, List
 from app.ai.agents.state import ChatAgentOutput
 from app.core.logging import get_logger
 
@@ -14,7 +13,7 @@ class ChatAgent:
     """Conversational Chat Agent with codebase context memory."""
 
     @staticmethod
-    async def chat(user_query: str, history: List[Dict[str, str]]) -> ChatAgentOutput:
+    async def chat(user_query: str, history: list[dict[str, str]]) -> ChatAgentOutput:
         logger.info("Chat Agent answering user query", query=user_query)
 
         query_lower = user_query.lower()

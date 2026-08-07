@@ -1,27 +1,37 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.exceptions import RequestValidationError
-from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy import select
+from starlette.middleware.base import BaseHTTPMiddleware
 
+import app.models  # Ensures all models are registered in Base.metadata
+from app.api.v1.router import api_v1_router
 from app.core.config import settings
-from app.core.logging import setup_logging, get_logger
-from app.core.redis import init_redis, close_redis
-from app.core.database import engine, AsyncSessionLocal
-import app.models # Ensures all models are registered in Base.metadata
-from app.models import Base, User, UserRole, UserStatus, Organization, OrgTier, OrganizationMember, MemberRole
+from app.core.database import AsyncSessionLocal, engine
+from app.core.logging import get_logger, setup_logging
+from app.core.redis import close_redis, init_redis
 from app.core.security import get_password_hash
-from app.middleware.request_id import RequestIDMiddleware
-from app.middleware.rate_limit import RateLimitMiddleware
 from app.exceptions.base import AppException
 from app.exceptions.handlers import (
     app_exception_handler,
-    validation_exception_handler,
     generic_exception_handler,
+    validation_exception_handler,
 )
-from app.api.v1.router import api_v1_router
+from app.middleware.rate_limit import RateLimitMiddleware
+from app.middleware.request_id import RequestIDMiddleware
+from app.models import (
+    Base,
+    MemberRole,
+    Organization,
+    OrganizationMember,
+    OrgTier,
+    User,
+    UserRole,
+    UserStatus,
+)
 
 setup_logging()
 logger = get_logger(__name__)
@@ -40,7 +50,7 @@ async def auto_init_db():
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-        
+
         async with AsyncSessionLocal() as session:
             result = await session.execute(select(User).where(User.email == "admin@codeguardian.ai"))
             user = result.scalar_one_or_none()
@@ -77,7 +87,7 @@ async def auto_init_db():
 async def lifespan(app: FastAPI):
     """Application lifespan event handler for startup and shutdown procedures."""
     logger.info("Starting CodeGuardian AI Backend Server", environment=settings.ENVIRONMENT)
-    
+
     # Auto-initialize database & seed data
     await auto_init_db()
 

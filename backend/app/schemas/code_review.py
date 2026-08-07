@@ -1,7 +1,8 @@
 import uuid
 from datetime import datetime
-from typing import List, Optional
+
 from pydantic import BaseModel
+
 
 class ReviewIssueItem(BaseModel):
     id: str
@@ -13,7 +14,7 @@ class ReviewIssueItem(BaseModel):
     code_snippet: str
     ai_explanation: str
     ai_suggestion: str
-    patch_diff: Optional[str] = None
+    patch_diff: str | None = None
 
 class CodeReviewResponse(BaseModel):
     id: uuid.UUID
@@ -25,7 +26,7 @@ class CodeReviewResponse(BaseModel):
     dead_code_count: int
     naming_violations_count: int
     code_smells_count: int
-    issues: List[ReviewIssueItem]
+    issues: list[ReviewIssueItem]
     reviewed_at: datetime
 
     class Config:

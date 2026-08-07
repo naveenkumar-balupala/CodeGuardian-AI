@@ -1,5 +1,7 @@
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from pydantic import BaseModel
+
 
 class OrchestrateRequest(BaseModel):
     repository_id: str
@@ -10,22 +12,22 @@ class ChatMessagePayload(BaseModel):
 
 class ChatRequest(BaseModel):
     query: str
-    history: Optional[List[ChatMessagePayload]] = None
+    history: list[ChatMessagePayload] | None = None
 
 class ChatResponse(BaseModel):
     answer: str
-    referenced_files: List[str]
-    suggested_followups: List[str]
+    referenced_files: list[str]
+    suggested_followups: list[str]
 
 class OrchestrateResponse(BaseModel):
     repository_id: str
-    completed_nodes: List[str]
-    repository_data: Optional[Dict[str, Any]]
-    architecture_data: Optional[Dict[str, Any]]
-    security_data: Optional[Dict[str, Any]]
-    database_data: Optional[Dict[str, Any]]
-    performance_data: Optional[Dict[str, Any]]
-    testing_data: Optional[Dict[str, Any]]
-    documentation_data: Optional[Dict[str, Any]]
-    recommendations_data: Optional[Dict[str, Any]]
-    report_data: Optional[Dict[str, Any]]
+    completed_nodes: list[str]
+    repository_data: dict[str, Any] | None
+    architecture_data: dict[str, Any] | None
+    security_data: dict[str, Any] | None
+    database_data: dict[str, Any] | None
+    performance_data: dict[str, Any] | None
+    testing_data: dict[str, Any] | None
+    documentation_data: dict[str, Any] | None
+    recommendations_data: dict[str, Any] | None
+    report_data: dict[str, Any] | None

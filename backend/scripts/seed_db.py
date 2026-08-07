@@ -1,5 +1,4 @@
 import asyncio
-import uuid
 import sys
 from pathlib import Path
 
@@ -7,28 +6,28 @@ from pathlib import Path
 backend_dir = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(backend_dir))
 
-from app.core.database import AsyncSessionLocal, engine
+from app.core.database import AsyncSessionLocal
 from app.models import (
-    Base,
+    AIRemediation,
+    AuditLog,
+    Finding,
+    FindingHistory,
+    FindingStatus,
+    MemberRole,
+    Organization,
+    OrganizationMember,
+    OrgTier,
+    RepoProvider,
+    Repository,
+    Scan,
+    ScanStatus,
+    ScanType,
+    SeverityLevel,
     User,
     UserRole,
     UserStatus,
-    Organization,
-    OrgTier,
-    OrganizationMember,
-    MemberRole,
-    Repository,
-    RepoProvider,
-    Scan,
-    ScanType,
-    ScanStatus,
-    Finding,
-    SeverityLevel,
-    FindingStatus,
-    FindingHistory,
-    AIRemediation,
-    AuditLog,
 )
+
 
 async def seed_database():
     print("Starting database seeding...")

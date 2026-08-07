@@ -1,4 +1,5 @@
-from typing import Dict, Any
+from typing import Any
+
 from app.ai.agents.state import AgentState, RepositoryAgentOutput
 from app.core.logging import get_logger
 
@@ -14,7 +15,7 @@ class RepositoryAgent:
     """Repository Agent analyzing file structures and manifests."""
 
     @staticmethod
-    def inspect_file_tree_tool(repo_name: str) -> Dict[str, Any]:
+    def inspect_file_tree_tool(repo_name: str) -> dict[str, Any]:
         """Tool: Inspects codebase files and package manifests."""
         return {
             "file_tree_summary": f"Analyzed repository tree for {repo_name}",

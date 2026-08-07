@@ -59,14 +59,14 @@ export default function DashboardPage() {
                 <ProjectHealthCard breakdown={data.severity_breakdown} />
 
                 {/* Stat 3: Monitored Repos */}
-                <div className="rounded-2xl border border-border bg-card/60 p-6 shadow-sm backdrop-blur flex flex-col justify-between">
+                <a href="/repositories" className="rounded-2xl border border-border bg-card/60 p-6 shadow-sm backdrop-blur flex flex-col justify-between hover:border-primary/50 transition">
                   <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Monitored Repositories</span>
                   <div className="my-2">
                     <span className="text-4xl font-extrabold text-foreground">{data.total_repositories}</span>
-                    <span className="block text-xs text-emerald-400 font-medium mt-1">Active Protection Enabled</span>
+                    <span className="block text-xs text-emerald-400 font-medium mt-1">Active Protection Enabled &rarr;</span>
                   </div>
                   <div className="text-xs text-slate-400 border-t border-border/50 pt-3 font-mono">100% CI/CD Integrated</div>
-                </div>
+                </a>
 
                 {/* Stat 4: Scan Pass Rate */}
                 <div className="rounded-2xl border border-border bg-card/60 p-6 shadow-sm backdrop-blur flex flex-col justify-between">

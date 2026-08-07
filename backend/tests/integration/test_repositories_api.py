@@ -1,6 +1,8 @@
 import pytest
 from httpx import AsyncClient
+
 from app.models import Repository
+
 
 @pytest.mark.asyncio
 async def test_trigger_security_agent_scan(async_client: AsyncClient, mock_repository: Repository, auth_headers: dict):

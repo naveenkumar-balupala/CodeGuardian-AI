@@ -11,7 +11,9 @@ export const RepositoryStatusTable: React.FC<Props> = ({ repositories }) => {
     <div className="rounded-2xl border border-border bg-card/60 p-6 shadow-sm backdrop-blur">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-bold tracking-tight text-foreground">Monitored Repositories</h3>
-        <span className="text-xs text-slate-400 font-mono">{repositories.length} Total Repos</span>
+        <a href="/repositories" className="text-xs text-primary font-semibold hover:underline flex items-center gap-1">
+          Manage Repositories ({repositories.length}) &rarr;
+        </a>
       </div>
 
       <div className="overflow-x-auto">

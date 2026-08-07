@@ -1,6 +1,5 @@
-from datetime import datetime
-from typing import List, Optional
 from pydantic import BaseModel
+
 
 class ProjectScoreMetric(BaseModel):
     score: int
@@ -24,7 +23,7 @@ class RepositorySummary(BaseModel):
     branch: str
     status: str
     vulnerability_count: int
-    last_scan_at: Optional[str]
+    last_scan_at: str | None
 
 class ReviewHistoryItem(BaseModel):
     id: str
@@ -34,7 +33,7 @@ class ReviewHistoryItem(BaseModel):
     auditor_name: str
     previous_status: str
     new_status: str
-    comment: Optional[str]
+    comment: str | None
     timestamp: str
 
 class SecurityTrendPoint(BaseModel):
@@ -66,8 +65,8 @@ class DashboardSummaryResponse(BaseModel):
     total_repositories: int
     total_scans_run: int
     pass_rate_percentage: float
-    repositories: List[RepositorySummary]
-    review_history: List[ReviewHistoryItem]
-    security_trends: List[SecurityTrendPoint]
-    recent_activity: List[ActivityItem]
-    notifications: List[NotificationAlert]
+    repositories: list[RepositorySummary]
+    review_history: list[ReviewHistoryItem]
+    security_trends: list[SecurityTrendPoint]
+    recent_activity: list[ActivityItem]
+    notifications: list[NotificationAlert]

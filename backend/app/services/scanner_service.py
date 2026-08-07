@@ -1,15 +1,12 @@
 import uuid
-import os
-import json
-from datetime import datetime, timezone
-from typing import Dict, List, Any
+from datetime import UTC, datetime
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Repository, RepositoryAnalysis, AuditLog
-from app.schemas.scanner import RepositoryAnalysisResponse, DependencyItem
-from app.exceptions.base import NotFoundException
 from app.core.logging import get_logger
+from app.exceptions.base import NotFoundException
+from app.models import AuditLog, Repository, RepositoryAnalysis
 
 logger = get_logger(__name__)
 
@@ -79,7 +76,7 @@ class ScannerService:
                 has_swagger=has_swagger,
                 dependencies=dependencies,
                 summary_report=summary_markdown,
-                scanned_at=datetime.now(timezone.utc),
+                scanned_at=datetime.now(UTC),
             )
             db.add(analysis)
         else:
@@ -93,7 +90,7 @@ class ScannerService:
             analysis.has_swagger = has_swagger
             analysis.dependencies = dependencies
             analysis.summary_report = summary_markdown
-            analysis.scanned_at = datetime.now(timezone.utc)
+            analysis.scanned_at = datetime.now(UTC)
 
         db.add(AuditLog(
             organization_id=repo.organization_id,

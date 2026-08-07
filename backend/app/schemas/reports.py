@@ -1,11 +1,13 @@
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Any
+
 from pydantic import BaseModel, Field
+
 
 class BrandingConfig(BaseModel):
     company_name: str = "CodeGuardian AI Corp"
-    logo_url: Optional[str] = "https://codeguardian.ai/logo.png"
+    logo_url: str | None = "https://codeguardian.ai/logo.png"
     brand_color: str = "#4f46e5"
     author: str = "Automated Security & Audit Engine"
 
@@ -23,7 +25,7 @@ class ReportExportResponse(BaseModel):
     format: str
     title: str
     executive_summary: str
-    branding_info: Dict[str, Any]
+    branding_info: dict[str, Any]
     file_name: str
     file_size_bytes: int
     download_url: str

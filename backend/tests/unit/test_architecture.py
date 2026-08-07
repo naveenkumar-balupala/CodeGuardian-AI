@@ -1,7 +1,9 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models import Repository
 from app.services.architecture_service import ArchitectureService
+
 
 @pytest.mark.asyncio
 async def test_architecture_scan_mermaid_generation(db_session: AsyncSession, mock_repository: Repository):

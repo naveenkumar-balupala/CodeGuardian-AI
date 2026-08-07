@@ -1,8 +1,10 @@
 import uuid
+
 import structlog
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
+
 
 class RequestIDMiddleware(BaseHTTPMiddleware):
     """Middleware that injects a unique X-Request-ID into request context and response headers."""

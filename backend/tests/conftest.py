@@ -1,16 +1,15 @@
-import os
 import uuid
-import pytest
-import pytest_asyncio
-from typing import AsyncGenerator
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from collections.abc import AsyncGenerator
 
-from app.main import app
-from app.models.base import Base
-from app.models import User, Repository, Organization, UserRole, UserStatus
-from app.core.security import create_access_token, get_password_hash
+import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 from app.api.deps import get_db
+from app.core.security import create_access_token, get_password_hash
+from app.main import app
+from app.models import Organization, Repository, User, UserRole, UserStatus
+from app.models.base import Base
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 

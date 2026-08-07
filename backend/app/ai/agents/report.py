@@ -1,4 +1,5 @@
-from typing import Dict, Any
+from typing import Any
+
 from app.ai.agents.state import AgentState, ReportAgentOutput
 from app.core.logging import get_logger
 
@@ -14,7 +15,7 @@ class ReportAgent:
     """Report Agent compiling executive security audit reports."""
 
     @staticmethod
-    def compile_report_tool(state: AgentState) -> Dict[str, Any]:
+    def compile_report_tool(state: AgentState) -> dict[str, Any]:
         """Tool: Compiles final executive audit report."""
         repo_name = state.get("repository_full_name", "CodeGuardian AI")
         sec_data = state.get("security_data", {})

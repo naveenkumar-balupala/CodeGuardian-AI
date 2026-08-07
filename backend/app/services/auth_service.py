@@ -1,28 +1,27 @@
-from datetime import datetime, timedelta, timezone
-from typing import Optional, Dict, Any
+from datetime import UTC, datetime, timedelta
+from typing import Any
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.logging import get_logger
 from app.core.security import (
-    get_password_hash,
-    verify_password,
     create_access_token,
     create_refresh_token,
-    hash_token,
-    generate_random_token,
     decode_token,
+    generate_random_token,
+    get_password_hash,
+    hash_token,
+    verify_password,
 )
-from app.models import User, RefreshToken, AuditLog, UserRole, UserStatus
-from app.schemas.auth import UserRegister, UserLogin, TokenResponse, UserResponse
 from app.exceptions.base import (
-    AppException,
-    NotFoundException,
-    ValidationException,
-    UnauthorizedException,
     ForbiddenException,
+    UnauthorizedException,
+    ValidationException,
 )
-from app.core.logging import get_logger
+from app.models import AuditLog, RefreshToken, User, UserRole, UserStatus
+from app.schemas.auth import TokenResponse, UserLogin, UserRegister, UserResponse
 
 logger = get_logger(__name__)
 
@@ -66,7 +65,7 @@ class AuthService:
         return user
 
     @staticmethod
-    async def authenticate_user(db: AsyncSession, data: UserLogin, ip_address: Optional[str] = None) -> TokenResponse:
+    async def authenticate_user(db: AsyncSession, data: UserLogin, ip_address: str | None = None) -> TokenResponse:
         """Authenticates a user and issues access/refresh tokens."""
         query = select(User).where(User.email == data.email)
         result = await db.execute(query)
@@ -76,7 +75,7 @@ class AuthService:
             raise UnauthorizedException("Invalid email or password.")
 
         # 1. Check Account Lock Status
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if user.locked_until and user.locked_until > now:
             minutes_left = int((user.locked_until - now).total_seconds() // 60) + 1
             raise ForbiddenException(f"Account locked due to multiple failed login attempts. Try again in {minutes_left} minutes.")
@@ -147,9 +146,10 @@ class AuthService:
             payload = decode_token(refresh_token_str)
             if payload.get("type") != "refresh":
                 raise UnauthorizedException("Invalid refresh token type.")
-            user_id = payload.get("sub")
-        except Exception:
-            raise UnauthorizedException("Invalid or expired refresh token.")
+            if not payload.get("sub"):
+                raise UnauthorizedException("Invalid refresh token payload.")
+        except Exception as err:
+            raise UnauthorizedException("Invalid or expired refresh token.") from err
 
         token_hash = hash_token(refresh_token_str)
         query = select(RefreshToken).where(
@@ -159,7 +159,7 @@ class AuthService:
         result = await db.execute(query)
         db_token = result.scalar_one_or_none()
 
-        if not db_token or db_token.expires_at < datetime.now(timezone.utc):
+        if not db_token or db_token.expires_at < datetime.now(UTC):
             raise UnauthorizedException("Refresh token revoked or expired.")
 
         # Fetch user
@@ -211,8 +211,8 @@ class AuthService:
 
         reset_token = generate_random_token()
         user.reset_token = reset_token
-        user.reset_token_expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
-        
+        user.reset_token_expires_at = datetime.now(UTC) + timedelta(hours=1)
+
         db.add(AuditLog(
             user_id=user.id,
             action="PASSWORD_RESET_REQUESTED",
@@ -227,7 +227,7 @@ class AuthService:
         """Resets user password using valid token."""
         query = select(User).where(
             User.reset_token == token,
-            User.reset_token_expires_at > datetime.now(timezone.utc),
+            User.reset_token_expires_at > datetime.now(UTC),
         )
         result = await db.execute(query)
         user = result.scalar_one_or_none()
@@ -262,7 +262,7 @@ class AuthService:
         await db.commit()
 
     @staticmethod
-    async def authenticate_oauth_user(db: AsyncSession, profile: Dict[str, Any]) -> TokenResponse:
+    async def authenticate_oauth_user(db: AsyncSession, profile: dict[str, Any]) -> TokenResponse:
         """Authenticates or registers a user via OAuth provider payload."""
         email = profile.get("email")
         oauth_id = profile.get("oauth_id")
@@ -291,7 +291,7 @@ class AuthService:
 
         access_token = create_access_token(subject=user.id, roles=[user.role.value])
         refresh_token_str, expires_at = create_refresh_token(subject=user.id)
-        
+
         db.add(RefreshToken(
             user_id=user.id,
             token_hash=hash_token(refresh_token_str),

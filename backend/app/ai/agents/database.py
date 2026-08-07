@@ -1,4 +1,5 @@
-from typing import Dict, Any
+from typing import Any
+
 from app.ai.agents.state import AgentState, DatabaseAgentOutput
 from app.core.logging import get_logger
 
@@ -14,7 +15,7 @@ class DatabaseAgent:
     """Database Agent auditing ORM models, indexes, and queries."""
 
     @staticmethod
-    def audit_database_tool() -> Dict[str, Any]:
+    def audit_database_tool() -> dict[str, Any]:
         """Tool: Audits database schemas, indexes, and query efficiency."""
         return {
             "orm_framework": "SQLAlchemy 2.0 (Async)",

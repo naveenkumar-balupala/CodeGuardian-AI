@@ -1,15 +1,14 @@
-from typing import Dict, Any
-from app.ai.agents.state import AgentState
-from app.ai.agents.coordinator import CoordinatorAgent
-from app.ai.agents.repository import RepositoryAgent
 from app.ai.agents.architecture import ArchitectureAgent
-from app.ai.agents.security import SecurityAgent
+from app.ai.agents.coordinator import CoordinatorAgent
 from app.ai.agents.database import DatabaseAgent
-from app.ai.agents.performance import PerformanceAgent
-from app.ai.agents.testing import TestingAgent
 from app.ai.agents.documentation import DocumentationAgent
+from app.ai.agents.performance import PerformanceAgent
 from app.ai.agents.recommendation import RecommendationAgent
 from app.ai.agents.report import ReportAgent
+from app.ai.agents.repository import RepositoryAgent
+from app.ai.agents.security import SecurityAgent
+from app.ai.agents.state import AgentState
+from app.ai.agents.testing import TestingAgent
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)

@@ -1,20 +1,20 @@
 import uuid
-from typing import List
-from fastapi import APIRouter, Depends, UploadFile, File, BackgroundTasks, status
+
+from fastapi import APIRouter, BackgroundTasks, Depends, File, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db, get_current_user
+from app.api.deps import get_current_user, get_db
 from app.core.database import AsyncSessionLocal
-from app.models import User, Repository, Organization
+from app.exceptions.base import NotFoundException, ValidationException
+from app.models import Organization, Repository, User
+from app.schemas.common import ResponseEnvelope
 from app.schemas.repository import (
     RepositoryCreateURL,
-    RepositoryResponse,
     RepositoryProgressResponse,
+    RepositoryResponse,
 )
-from app.schemas.common import ResponseEnvelope
 from app.services.repo_service import RepositoryService
-from app.exceptions.base import NotFoundException, ValidationException
 
 router = APIRouter()
 
@@ -64,7 +64,7 @@ async def upload_repo_zip(
 
     return ResponseEnvelope(data=RepositoryResponse.model_validate(repo))
 
-@router.get("", summary="List Monitored Repositories", response_model=ResponseEnvelope[List[RepositoryResponse]])
+@router.get("", summary="List Monitored Repositories", response_model=ResponseEnvelope[list[RepositoryResponse]])
 async def list_repositories(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),

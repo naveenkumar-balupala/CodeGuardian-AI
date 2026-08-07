@@ -1,14 +1,21 @@
 import os
 import uuid
-from datetime import datetime, timezone
-from typing import Dict, List, Any
+from datetime import UTC, datetime
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Repository, ReportExport, SecurityAgentReport, ArchitectureReport, CodeReview, AuditLog
-from app.schemas.reports import ReportExportRequest, ReportExportResponse
-from app.exceptions.base import NotFoundException
 from app.core.logging import get_logger
+from app.exceptions.base import NotFoundException
+from app.models import (
+    ArchitectureReport,
+    AuditLog,
+    CodeReview,
+    ReportExport,
+    Repository,
+    SecurityAgentReport,
+)
+from app.schemas.reports import ReportExportRequest
 
 logger = get_logger(__name__)
 
@@ -68,7 +75,7 @@ class ReportExportService:
             f.write(f"Format: {req.format}\n")
             f.write(f"Company: {req.branding.company_name}\n")
             f.write(f"Author: {req.branding.author}\n")
-            f.write(f"Generated At: {datetime.now(timezone.utc).isoformat()}\n\n")
+            f.write(f"Generated At: {datetime.now(UTC).isoformat()}\n\n")
             f.write(f"{executive_summary}\n\n")
             for sec in sections:
                 f.write(f"--- {sec['title']} ---\n")
@@ -89,7 +96,7 @@ class ReportExportService:
             file_path=file_path,
             file_size_bytes=file_size,
             download_url=download_url,
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
         )
 
         db.add(report_export)
@@ -108,7 +115,7 @@ class ReportExportService:
         return report_export
 
     @staticmethod
-    async def list_reports(db: AsyncSession, repo_id: uuid.UUID) -> List[ReportExport]:
+    async def list_reports(db: AsyncSession, repo_id: uuid.UUID) -> list[ReportExport]:
         query = select(ReportExport).where(ReportExport.repository_id == repo_id).order_by(ReportExport.generated_at.desc())
         result = await db.execute(query)
         return list(result.scalars().all())

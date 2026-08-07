@@ -1,4 +1,5 @@
-from typing import Any, Dict, Optional
+from typing import Any
+
 
 class AppException(Exception):
     """Base exception class for all custom application errors."""
@@ -8,10 +9,10 @@ class AppException(Exception):
 
     def __init__(
         self,
-        message: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
-        status_code: Optional[int] = None,
-        error_code: Optional[str] = None,
+        message: str | None = None,
+        details: dict[str, Any] | None = None,
+        status_code: int | None = None,
+        error_code: str | None = None,
     ):
         if message:
             self.message = message

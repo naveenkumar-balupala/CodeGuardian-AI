@@ -1,4 +1,5 @@
-from typing import Dict, Any
+from typing import Any
+
 from app.ai.agents.state import AgentState, TestingAgentOutput
 from app.core.logging import get_logger
 
@@ -14,7 +15,7 @@ class TestingAgent:
     """Testing Agent analyzing test suites and coverage gaps."""
 
     @staticmethod
-    def audit_testing_tool() -> Dict[str, Any]:
+    def audit_testing_tool() -> dict[str, Any]:
         """Tool: Evaluates test files and estimates code coverage."""
         return {
             "test_framework": "pytest & pytest-asyncio",

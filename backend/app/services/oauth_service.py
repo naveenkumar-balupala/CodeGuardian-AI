@@ -1,7 +1,10 @@
-from typing import Any, Dict, Optional
+from typing import Any
+
 import httpx
+
 from app.core.config import settings
 from app.exceptions.base import ExternalServiceException
+
 
 class OAuthService:
     """Service handling GitHub and Google OAuth2 integration."""
@@ -18,7 +21,7 @@ class OAuthService:
         return f"https://accounts.google.com/o/oauth2/v2/auth?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&scope=openid%20email%20profile"
 
     @staticmethod
-    async def process_github_callback(code: str) -> Dict[str, Any]:
+    async def process_github_callback(code: str) -> dict[str, Any]:
         """Exchanges GitHub OAuth code for access token and fetches user profile."""
         if settings.ENVIRONMENT == "development" and code.startswith("mock_"):
             return {
@@ -66,7 +69,7 @@ class OAuthService:
             }
 
     @staticmethod
-    async def process_google_callback(code: str) -> Dict[str, Any]:
+    async def process_google_callback(code: str) -> dict[str, Any]:
         """Exchanges Google OAuth code for access token and fetches user profile."""
         if settings.ENVIRONMENT == "development" and code.startswith("mock_"):
             return {

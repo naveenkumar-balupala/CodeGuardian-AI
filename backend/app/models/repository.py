@@ -1,12 +1,14 @@
 import uuid
 from datetime import datetime
-from typing import List, Optional
-from sqlalchemy import String, Boolean, Integer, BigInteger, Enum as SQLEnum, ForeignKey, DateTime, Text, Index
+
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, SoftDeleteMixin
 from app.models.enums import RepoProvider
+
 
 class Repository(Base, SoftDeleteMixin):
     """Git Repository entity owned by an Organization with rich metadata and processing status."""
@@ -23,19 +25,19 @@ class Repository(Base, SoftDeleteMixin):
     # Extended Metadata
     size_bytes: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False)
     file_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    last_commit_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
-    last_commit_author: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    last_commit_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    last_commit_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    last_commit_author: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    last_commit_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Background Processing Queue Status
     processing_status: Mapped[str] = mapped_column(String(32), default="QUEUED", nullable=False, index=True) # QUEUED, CLONING, VIRUS_CHECK, INDEXING, COMPLETED, FAILED
     processing_progress: Mapped[int] = mapped_column(Integer, default=0, nullable=False) # 0 to 100%
-    processing_error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    processing_error: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Relationships
     organization: Mapped["Organization"] = relationship("Organization", back_populates="repositories")
-    scans: Mapped[List["Scan"]] = relationship("Scan", back_populates="repository", cascade="all, delete-orphan")
-    findings: Mapped[List["Finding"]] = relationship("Finding", back_populates="repository", cascade="all, delete-orphan")
+    scans: Mapped[list["Scan"]] = relationship("Scan", back_populates="repository", cascade="all, delete-orphan")
+    findings: Mapped[list["Finding"]] = relationship("Finding", back_populates="repository", cascade="all, delete-orphan")
 
     __table_args__ = (
         Index("idx_org_repo_name", "organization_id", "name"),
@@ -49,7 +51,7 @@ class APIKey(Base):
     key_name: Mapped[str] = mapped_column(String(255), nullable=False)
     key_prefix: Mapped[str] = mapped_column(String(16), nullable=False, index=True)
     hashed_key: Mapped[str] = mapped_column(String(255), nullable=False)
-    expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     is_revoked: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # Relationships

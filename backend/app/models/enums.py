@@ -1,5 +1,6 @@
 import enum
 
+
 class UserRole(str, enum.Enum):
     ADMIN = "ADMIN"
     SECURITY_ENGINEER = "SECURITY_ENGINEER"

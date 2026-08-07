@@ -11,16 +11,57 @@ class ApiClient {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    isRetry = false
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
-    const headers = {
+
+    // Dynamically retrieve access token from client localStorage
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...((options.headers as Record<string, string>) || {}),
     };
 
     try {
       const response = await fetch(url, { ...options, headers });
+
+      // Handle 401 Unauthorized with automatic token refresh attempt
+      if (
+        response.status === 401 &&
+        !isRetry &&
+        !endpoint.includes('/auth/login') &&
+        !endpoint.includes('/auth/refresh')
+      ) {
+        const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
+        if (refreshToken) {
+          try {
+            const refreshResp = await fetch(`${this.baseUrl}/api/v1/auth/refresh`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ refresh_token: refreshToken }),
+            });
+
+            if (refreshResp.ok) {
+              const refreshData = await refreshResp.json();
+              const newToken = refreshData.data?.access_token;
+              if (newToken) {
+                localStorage.setItem('access_token', newToken);
+                if (refreshData.data?.refresh_token) {
+                  localStorage.setItem('refresh_token', refreshData.data.refresh_token);
+                }
+                // Retry request with new token
+                return this.request<T>(endpoint, options, true);
+              }
+            }
+          } catch {
+            // Token refresh failed
+          }
+        }
+      }
+
       const data = await response.json();
 
       if (!response.ok) {
@@ -48,6 +89,34 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(body),
     });
+  }
+
+  public put<T>(
+    endpoint: string,
+    body: any,
+    options?: RequestInit
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  }
+
+  public patch<T>(
+    endpoint: string,
+    body: any,
+    options?: RequestInit
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  public delete<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { ...options, method: 'DELETE' });
   }
 }
 

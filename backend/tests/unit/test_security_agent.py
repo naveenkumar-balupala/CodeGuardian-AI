@@ -1,7 +1,9 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models import Repository
 from app.services.security_agent_service import SecurityAgentService
+
 
 @pytest.mark.asyncio
 async def test_security_agent_scan_metrics(db_session: AsyncSession, mock_repository: Repository):

@@ -1,8 +1,9 @@
 import hashlib
 import secrets
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional, Union
-from jose import jwt, JWTError
+from datetime import UTC, datetime, timedelta
+from typing import Any
+
+from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 from app.core.config import settings
@@ -17,12 +18,12 @@ def get_password_hash(password: str) -> str:
     """Generates a bcrypt hash from a plain text password."""
     return pwd_context.hash(password)
 
-def create_access_token(subject: Union[str, Any], roles: Optional[list] = None, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(subject: str | Any, roles: list | None = None, expires_delta: timedelta | None = None) -> str:
     """Creates a short-lived JWT Access Token."""
     if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
     to_encode = {
         "sub": str(subject),
@@ -33,12 +34,12 @@ def create_access_token(subject: Union[str, Any], roles: Optional[list] = None, 
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
     return encoded_jwt
 
-def create_refresh_token(subject: Union[str, Any], expires_delta: Optional[timedelta] = None) -> tuple[str, datetime]:
+def create_refresh_token(subject: str | Any, expires_delta: timedelta | None = None) -> tuple[str, datetime]:
     """Creates a long-lived Refresh Token."""
     if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        expire = datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
 
     token_secret = secrets.token_urlsafe(48)
     to_encode = {
@@ -50,7 +51,7 @@ def create_refresh_token(subject: Union[str, Any], expires_delta: Optional[timed
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
     return encoded_jwt, expire
 
-def decode_token(token: str) -> Dict[str, Any]:
+def decode_token(token: str) -> dict[str, Any]:
     """Decodes and validates a JWT token."""
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])

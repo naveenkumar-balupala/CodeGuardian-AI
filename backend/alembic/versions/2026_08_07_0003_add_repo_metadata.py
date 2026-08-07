@@ -5,15 +5,17 @@ Revises: 2026_08_07_0002
 Create Date: 2026-08-07 11:37:00.000000
 
 """
-from typing import Sequence, Union
-from alembic import op
+from collections.abc import Sequence
+
 import sqlalchemy as sa
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = '2026_08_07_0003'
-down_revision: Union[str, None] = '2026_08_07_0002'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = '2026_08_07_0002'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     op.add_column('repositories', sa.Column('size_bytes', sa.BigInteger(), nullable=False, server_default='0'))

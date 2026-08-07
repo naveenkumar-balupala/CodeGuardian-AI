@@ -1,4 +1,5 @@
-from typing import Dict, Any
+from typing import Any
+
 from app.ai.agents.state import AgentState, PerformanceAgentOutput
 from app.core.logging import get_logger
 
@@ -14,7 +15,7 @@ class PerformanceAgent:
     """Performance Agent auditing memory leaks and event loop blocking."""
 
     @staticmethod
-    def audit_performance_tool() -> Dict[str, Any]:
+    def audit_performance_tool() -> dict[str, Any]:
         """Tool: Audits event loop blocking calls and Redis caching opportunities."""
         return {
             "memory_leak_risks": [],

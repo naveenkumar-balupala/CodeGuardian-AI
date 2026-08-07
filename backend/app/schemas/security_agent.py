@@ -1,7 +1,9 @@
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Any
+
 from pydantic import BaseModel
+
 
 class SecurityFindingItem(BaseModel):
     id: str
@@ -16,7 +18,7 @@ class SecurityFindingItem(BaseModel):
     line_number: int
     code_snippet: str
     recommendation: str
-    patch_diff: Optional[str] = None
+    patch_diff: str | None = None
 
 class SecurityAgentReportResponse(BaseModel):
     id: uuid.UUID
@@ -27,9 +29,9 @@ class SecurityAgentReportResponse(BaseModel):
     high_count: int
     medium_count: int
     low_count: int
-    findings: List[SecurityFindingItem]
-    owasp_distribution: Dict[str, int]
-    chart_dataset: Dict[str, Any]
+    findings: list[SecurityFindingItem]
+    owasp_distribution: dict[str, int]
+    chart_dataset: dict[str, Any]
     scanned_at: datetime
 
     class Config:

@@ -1,7 +1,7 @@
 import uuid
-from datetime import datetime, timezone
-from typing import Optional
-from sqlalchemy import String, Boolean, ForeignKey, DateTime, Text, Index, JSON
+from datetime import UTC, datetime
+
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Index, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,13 +23,13 @@ class RepositoryAnalysis(Base):
     docker_configs: Mapped[list] = mapped_column(JSON_TYPE, nullable=False, default=list)
     package_managers: Mapped[list] = mapped_column(JSON_TYPE, nullable=False, default=list)
     has_swagger: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    
+
     dependencies: Mapped[list] = mapped_column(JSON_TYPE, nullable=False, default=list)
     summary_report: Mapped[str] = mapped_column(Text, nullable=False)
 
     scanned_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
         nullable=False,
     )
 

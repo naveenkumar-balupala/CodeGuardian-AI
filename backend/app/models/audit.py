@@ -1,6 +1,7 @@
 import uuid
 from typing import Optional
-from sqlalchemy import String, ForeignKey, Index, JSON
+
+from sqlalchemy import JSON, ForeignKey, Index, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -12,16 +13,16 @@ class AuditLog(Base):
     """System-wide immutable security audit log."""
     __tablename__ = "audit_logs"
 
-    user_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
-    organization_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True, index=True)
-    
+    user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    organization_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True, index=True)
+
     action: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     resource_type: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
-    resource_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    
-    ip_address: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
-    user_agent: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
-    payload: Mapped[Optional[dict]] = mapped_column(JSON_TYPE, nullable=True)
+    resource_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    ip_address: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    user_agent: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    payload: Mapped[dict | None] = mapped_column(JSON_TYPE, nullable=True)
 
     # Relationships
     user: Mapped[Optional["User"]] = relationship("User", back_populates="audit_logs")

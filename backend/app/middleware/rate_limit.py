@@ -1,12 +1,13 @@
 import time
+
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
 from app.core.config import settings
-from app.core.redis import redis_client
 from app.core.logging import get_logger
+from app.core.redis import redis_client
 
 logger = get_logger(__name__)
 

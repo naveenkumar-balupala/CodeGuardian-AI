@@ -1,7 +1,8 @@
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+
 from pydantic import BaseModel
+
 
 class ModuleCouplingItem(BaseModel):
     module_name: str
@@ -22,7 +23,7 @@ class ArchitectureRecommendation(BaseModel):
     priority: int
     title: str
     description: str
-    patch_diff: Optional[str] = None
+    patch_diff: str | None = None
 
 class ArchitectureReportResponse(BaseModel):
     id: uuid.UUID
@@ -32,13 +33,13 @@ class ArchitectureReportResponse(BaseModel):
     solid_score: int
     dry_score: int
     kiss_score: int
-    detected_patterns: List[str]
-    solid_violations: List[PrincipleViolation]
-    dry_violations: List[PrincipleViolation]
-    kiss_violations: List[PrincipleViolation]
-    module_coupling: List[ModuleCouplingItem]
+    detected_patterns: list[str]
+    solid_violations: list[PrincipleViolation]
+    dry_violations: list[PrincipleViolation]
+    kiss_violations: list[PrincipleViolation]
+    module_coupling: list[ModuleCouplingItem]
     mermaid_diagram: str
-    ai_recommendations: List[ArchitectureRecommendation]
+    ai_recommendations: list[ArchitectureRecommendation]
     scanned_at: datetime
 
     class Config:

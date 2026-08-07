@@ -1,15 +1,16 @@
 import asyncio
-import os
 import re
 import uuid
-from typing import Optional, List
-from sqlalchemy import select
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Repository, RepoProvider, AuditLog, Organization
-from app.schemas.repository import RepositoryCreateURL, RepositoryResponse, RepositoryProgressResponse
-from app.exceptions.base import ValidationException, NotFoundException
 from app.core.logging import get_logger
+from app.exceptions.base import NotFoundException
+from app.models import AuditLog, RepoProvider, Repository
+from app.schemas.repository import (
+    RepositoryCreateURL,
+    RepositoryProgressResponse,
+)
 
 logger = get_logger(__name__)
 

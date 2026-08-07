@@ -1,5 +1,7 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from fastapi import APIRouter
+
 from app.core.database import check_db_health
 from app.core.redis import check_redis_health
 
@@ -17,7 +19,7 @@ async def health_check():
         "status": "success",
         "data": {
             "status": status,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "services": {
                 "postgres": "healthy" if db_ok else "unhealthy",
                 "redis": "healthy" if redis_ok else "unhealthy",

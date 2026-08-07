@@ -1,5 +1,18 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import health, auth, dashboard, repositories, scanner, ai_agents, code_review, security_agent, architecture, reports, chat
+
+from app.api.v1.endpoints import (
+    ai_agents,
+    architecture,
+    auth,
+    chat,
+    code_review,
+    dashboard,
+    health,
+    reports,
+    repositories,
+    scanner,
+    security_agent,
+)
 
 api_v1_router = APIRouter()
 

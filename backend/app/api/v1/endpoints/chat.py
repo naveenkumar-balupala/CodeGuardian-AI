@@ -1,11 +1,16 @@
 import uuid
-from typing import List
-from fastapi import APIRouter, Depends, status
+
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db, get_current_user
+from app.api.deps import get_current_user, get_db
 from app.models import User
-from app.schemas.chat import CreateChatSessionRequest, SendChatMessageRequest, ChatSessionResponse, ChatMessageResponse
+from app.schemas.chat import (
+    ChatMessageResponse,
+    ChatSessionResponse,
+    CreateChatSessionRequest,
+    SendChatMessageRequest,
+)
 from app.schemas.common import ResponseEnvelope
 from app.services.chat_rag_service import ChatRAGService
 
@@ -22,7 +27,7 @@ async def create_chat_session(
     session = await ChatRAGService.create_session(db, repo_id, current_user.id, payload)
     return ResponseEnvelope(data=ChatSessionResponse.model_validate(session))
 
-@router.get("/repositories/{repo_id}/chat/sessions", summary="List Repository Chat Sessions", response_model=ResponseEnvelope[List[ChatSessionResponse]])
+@router.get("/repositories/{repo_id}/chat/sessions", summary="List Repository Chat Sessions", response_model=ResponseEnvelope[list[ChatSessionResponse]])
 async def list_chat_sessions(
     repo_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),

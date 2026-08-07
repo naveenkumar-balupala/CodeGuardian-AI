@@ -1,13 +1,13 @@
 import uuid
-from datetime import datetime, timezone
-from typing import Dict, List, Any
+from datetime import UTC, datetime
+from typing import Any
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Repository, ArchitectureReport, AuditLog
-from app.schemas.architecture import ArchitectureReportResponse, ModuleCouplingItem, PrincipleViolation, ArchitectureRecommendation
-from app.exceptions.base import NotFoundException
 from app.core.logging import get_logger
+from app.exceptions.base import NotFoundException
+from app.models import ArchitectureReport, AuditLog, Repository
 
 logger = get_logger(__name__)
 
@@ -36,7 +36,7 @@ class ArchitectureService:
         ]
 
         # SOLID Violations
-        solid_violations: List[Dict[str, Any]] = [
+        solid_violations: list[dict[str, Any]] = [
             {
                 "principle": "DIP",
                 "title": "Dependency Inversion Principle (DIP) Boundary Violation",
@@ -56,7 +56,7 @@ class ArchitectureService:
         ]
 
         # DRY Violations
-        dry_violations: List[Dict[str, Any]] = [
+        dry_violations: list[dict[str, Any]] = [
             {
                 "principle": "DRY",
                 "title": "Duplicated Authorization Check Logic",
@@ -68,7 +68,7 @@ class ArchitectureService:
         ]
 
         # KISS Violations
-        kiss_violations: List[Dict[str, Any]] = [
+        kiss_violations: list[dict[str, Any]] = [
             {
                 "principle": "KISS",
                 "title": "Premature Inheritance Hierarchy Abstraction",
@@ -80,7 +80,7 @@ class ArchitectureService:
         ]
 
         # Module Coupling Graph Metrics
-        module_coupling: List[Dict[str, Any]] = [
+        module_coupling: list[dict[str, Any]] = [
             {
                 "module_name": "app.api.v1.endpoints",
                 "fan_in": 12,
@@ -137,7 +137,7 @@ class ArchitectureService:
         )
 
         # AI Refactoring Recommendations
-        ai_recommendations: List[Dict[str, Any]] = [
+        ai_recommendations: list[dict[str, Any]] = [
             {
                 "priority": 1,
                 "title": "Decouple API Routes from SQLAlchemy Sessions (DIP)",
@@ -173,7 +173,7 @@ class ArchitectureService:
             module_coupling=module_coupling,
             mermaid_diagram=mermaid_diagram,
             ai_recommendations=ai_recommendations,
-            scanned_at=datetime.now(timezone.utc),
+            scanned_at=datetime.now(UTC),
         )
 
         db.add(report)

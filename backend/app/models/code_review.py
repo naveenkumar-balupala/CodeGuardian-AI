@@ -1,7 +1,7 @@
 import uuid
-from datetime import datetime, timezone
-from typing import Optional
-from sqlalchemy import String, Integer, Float, ForeignKey, DateTime, Text, Index, JSON
+from datetime import UTC, datetime
+
+from sqlalchemy import JSON, DateTime, Float, ForeignKey, Index, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -30,7 +30,7 @@ class CodeReview(Base):
 
     reviewed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
         nullable=False,
     )
 

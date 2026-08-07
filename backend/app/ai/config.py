@@ -1,5 +1,7 @@
 from pydantic import BaseModel
+
 from app.core.config import settings
+
 
 class AISettings(BaseModel):
     default_provider: str = settings.DEFAULT_LLM_PROVIDER

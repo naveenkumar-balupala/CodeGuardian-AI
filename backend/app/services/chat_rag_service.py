@@ -1,14 +1,17 @@
 import uuid
-from datetime import datetime, timezone
-from typing import Dict, List, Any, Optional
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any
 
-from app.models import Repository, ChatSession, ChatMessage, User, AuditLog
-from app.schemas.chat import CreateChatSessionRequest, SendChatMessageRequest, ChatSessionResponse, ChatMessageResponse, SourceReference
-from app.exceptions.base import NotFoundException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
 from app.core.logging import get_logger
+from app.exceptions.base import NotFoundException
+from app.models import ChatMessage, ChatSession, Repository
+from app.schemas.chat import (
+    CreateChatSessionRequest,
+    SendChatMessageRequest,
+)
 
 logger = get_logger(__name__)
 
@@ -58,7 +61,7 @@ class ChatRAGService:
         return session
 
     @staticmethod
-    async def list_sessions(db: AsyncSession, repo_id: uuid.UUID, user_id: uuid.UUID) -> List[ChatSession]:
+    async def list_sessions(db: AsyncSession, repo_id: uuid.UUID, user_id: uuid.UUID) -> list[ChatSession]:
         query = (
             select(ChatSession)
             .options(selectinload(ChatSession.messages))
@@ -94,7 +97,7 @@ class ChatRAGService:
         # 2. Execute RAG & Intent Analysis
         query_text = req.message.lower()
         assistant_content = ""
-        referenced_files: List[Dict[str, Any]] = []
+        referenced_files: list[dict[str, Any]] = []
 
         if "architecture" in query_text or "structure" in query_text:
             assistant_content = (
@@ -121,11 +124,11 @@ class ChatRAGService:
 
         elif "file" in query_text or "explain" in query_text:
             assistant_content = (
-                f"### File Explanation: [database.py](file:///backend/app/core/database.py#L1-L32)\n\n"
-                f"The module `backend/app/core/database.py` manages database connection pools and session creation:\n"
-                f"- **`get_engine()`**: Attempts to create an async PostgreSQL connection pool using `settings.ASYNC_DATABASE_URI`.\n"
-                f"- **Fallback Mechanism**: Catches connection failures and gracefully falls back to local SQLite database `codeguardian.db`.\n"
-                f"- **`AsyncSessionLocal`**: Session factory used for Dependency Injection in FastAPI routers (`get_db`)."
+                "### File Explanation: [database.py](file:///backend/app/core/database.py#L1-L32)\n\n"
+                "The module `backend/app/core/database.py` manages database connection pools and session creation:\n"
+                "- **`get_engine()`**: Attempts to create an async PostgreSQL connection pool using `settings.ASYNC_DATABASE_URI`.\n"
+                "- **Fallback Mechanism**: Catches connection failures and gracefully falls back to local SQLite database `codeguardian.db`.\n"
+                "- **`AsyncSessionLocal`**: Session factory used for Dependency Injection in FastAPI routers (`get_db`)."
             )
             referenced_files = [
                 {"file_path": "backend/app/core/database.py", "line_start": 11, "line_end": 24, "snippet": "SQLITE_FALLBACK_URI = 'sqlite+aiosqlite:///./codeguardian.db'"},
@@ -133,14 +136,14 @@ class ChatRAGService:
 
         elif "bug" in query_text or "issue" in query_text:
             assistant_content = (
-                f"### RAG Bug & Edge-Case Inspection Results\n\n"
-                f"Scanned repository context for potential runtime bugs:\n\n"
-                f"1. **Potential Hardcoded JWT Secret Fallback**: [config.py](file:///backend/app/core/config.py#L19)\n"
-                f"   - *Risk*: `SECRET_KEY` has default string fallback if environment variable is absent.\n"
-                f"   - *Fix*: Raise error at startup if `SECRET_KEY` is omitted in production.\n\n"
-                f"2. **Unparameterized SQL Construction**: [auth.py](file:///backend/app/api/v1/auth.py#L42)\n"
-                f"   - *Risk*: Raw string formatting in SQL query poses SQL Injection risk.\n"
-                f"   - *Fix*: Use SQLAlchemy parameterized `select()` constructs."
+                "### RAG Bug & Edge-Case Inspection Results\n\n"
+                "Scanned repository context for potential runtime bugs:\n\n"
+                "1. **Potential Hardcoded JWT Secret Fallback**: [config.py](file:///backend/app/core/config.py#L19)\n"
+                "   - *Risk*: `SECRET_KEY` has default string fallback if environment variable is absent.\n"
+                "   - *Fix*: Raise error at startup if `SECRET_KEY` is omitted in production.\n\n"
+                "2. **Unparameterized SQL Construction**: [auth.py](file:///backend/app/api/v1/auth.py#L42)\n"
+                "   - *Risk*: Raw string formatting in SQL query poses SQL Injection risk.\n"
+                "   - *Fix*: Use SQLAlchemy parameterized `select()` constructs."
             )
             referenced_files = [
                 {"file_path": "backend/app/core/config.py", "line_start": 19, "line_end": 20, "snippet": "SECRET_KEY: str = 'change_this_key'"},
@@ -148,15 +151,15 @@ class ChatRAGService:
 
         elif "api" in query_text:
             assistant_content = (
-                f"### REST API Endpoints Overview\n\n"
-                f"The backend exposes RESTful endpoints registered in [router.py](file:///backend/app/api/v1/router.py#L1-L15):\n\n"
-                f"| Method | Endpoint Path | Description |\n"
-                f"| --- | --- | --- |\n"
-                f"| `POST` | `/api/v1/auth/login` | User login & JWT issue |\n"
-                f"| `POST` | `/api/v1/repositories` | Connect new repository |\n"
-                f"| `POST` | `/api/v1/repositories/{{id}}/security-agent/scan` | Trigger Security Agent scan |\n"
-                f"| `POST` | `/api/v1/repositories/{{id}}/architecture/scan` | Trigger Architecture scan |\n"
-                f"| `POST` | `/api/v1/repositories/{{id}}/reports/generate` | Export PDF/DOCX/PPTX Report |"
+                "### REST API Endpoints Overview\n\n"
+                "The backend exposes RESTful endpoints registered in [router.py](file:///backend/app/api/v1/router.py#L1-L15):\n\n"
+                "| Method | Endpoint Path | Description |\n"
+                "| --- | --- | --- |\n"
+                "| `POST` | `/api/v1/auth/login` | User login & JWT issue |\n"
+                "| `POST` | `/api/v1/repositories` | Connect new repository |\n"
+                "| `POST` | `/api/v1/repositories/{id}/security-agent/scan` | Trigger Security Agent scan |\n"
+                "| `POST` | `/api/v1/repositories/{id}/architecture/scan` | Trigger Architecture scan |\n"
+                "| `POST` | `/api/v1/repositories/{id}/reports/generate` | Export PDF/DOCX/PPTX Report |"
             )
             referenced_files = [
                 {"file_path": "backend/app/api/v1/router.py", "line_start": 1, "line_end": 15, "snippet": "api_v1_router.include_router(security_agent.router)"},

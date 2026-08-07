@@ -1,14 +1,13 @@
 import uuid
-import math
-from datetime import datetime, timezone
-from typing import Dict, List, Any
+from datetime import UTC, datetime
+from typing import Any
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Repository, SecurityAgentReport, AuditLog
-from app.schemas.security_agent import SecurityAgentReportResponse, SecurityFindingItem
-from app.exceptions.base import NotFoundException
 from app.core.logging import get_logger
+from app.exceptions.base import NotFoundException
+from app.models import AuditLog, Repository, SecurityAgentReport
 
 logger = get_logger(__name__)
 
@@ -22,7 +21,7 @@ class SecurityAgentService:
             raise NotFoundException("Repository not found.")
 
         # Comprehensive Security Findings List (SQLi, Secrets, XSS, JWT, CSRF, Dependencies, OWASP Top 10)
-        findings: List[Dict[str, Any]] = [
+        findings: list[dict[str, Any]] = [
             {
                 "id": "sec-sqli-01",
                 "category": "SQL_INJECTION",
@@ -141,7 +140,7 @@ class SecurityAgentService:
 
         # Composite Risk Score (0-100) & Risk Level Badge
         risk_score = min(100, (critical_count * 25) + (high_count * 15) + (medium_count * 8) + (low_count * 2))
-        
+
         risk_level = "LOW"
         if risk_score >= 75:
             risk_level = "CRITICAL"
@@ -197,7 +196,7 @@ class SecurityAgentService:
             findings=findings,
             owasp_distribution=owasp_distribution,
             chart_dataset=chart_dataset,
-            scanned_at=datetime.now(timezone.utc),
+            scanned_at=datetime.now(UTC),
         )
 
         db.add(report)

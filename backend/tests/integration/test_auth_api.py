@@ -1,6 +1,8 @@
 import pytest
 from httpx import AsyncClient
+
 from app.models import User
+
 
 @pytest.mark.asyncio
 async def test_login_success(async_client: AsyncClient, mock_user: User):

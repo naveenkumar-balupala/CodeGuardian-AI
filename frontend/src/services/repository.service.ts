@@ -42,6 +42,6 @@ export const RepositoryService = {
   },
 
   async deleteRepository(id: string): Promise<ApiResponse<void>> {
-    return apiClient.request<void>(`/api/v1/repositories/${id}`, { method: 'DELETE' });
+    return apiClient.delete<void>(`/api/v1/repositories/${id}`);
   },
 };

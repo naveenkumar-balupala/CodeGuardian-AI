@@ -1,4 +1,5 @@
-from typing import Dict, Any
+from typing import Any
+
 from app.ai.agents.state import AgentState, RecommendationAgentOutput
 from app.core.logging import get_logger
 
@@ -14,7 +15,7 @@ class RecommendationAgent:
     """Recommendation Agent synthesizing findings into prioritized remediations and patch diffs."""
 
     @staticmethod
-    def generate_recommendations_tool(state: AgentState) -> Dict[str, Any]:
+    def generate_recommendations_tool(state: AgentState) -> dict[str, Any]:
         """Tool: Synthesizes findings into prioritized fix recommendations and diffs."""
         return {
             "prioritized_remediations": [

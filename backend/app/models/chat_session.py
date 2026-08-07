@@ -1,7 +1,6 @@
 import uuid
-from datetime import datetime, timezone
-from typing import Optional, List
-from sqlalchemy import String, ForeignKey, DateTime, Text, Index, JSON
+
+from sqlalchemy import JSON, ForeignKey, Index, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -20,7 +19,7 @@ class ChatSession(Base):
     # Relationship
     repository: Mapped["Repository"] = relationship("Repository")
     user: Mapped["User"] = relationship("User")
-    messages: Mapped[List["ChatMessage"]] = relationship("ChatMessage", back_populates="session", cascade="all, delete-orphan", order_by="ChatMessage.created_at.asc()")
+    messages: Mapped[list["ChatMessage"]] = relationship("ChatMessage", back_populates="session", cascade="all, delete-orphan", order_by="ChatMessage.created_at.asc()")
 
     __table_args__ = (
         Index("idx_chat_session_repo_user", "repository_id", "user_id"),

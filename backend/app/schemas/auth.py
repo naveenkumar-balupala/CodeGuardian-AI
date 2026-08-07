@@ -1,8 +1,10 @@
 import uuid
 from datetime import datetime
-from typing import Optional
+
 from pydantic import BaseModel, EmailStr, Field
+
 from app.models.enums import UserRole, UserStatus
+
 
 class UserRegister(BaseModel):
     email: EmailStr
@@ -12,7 +14,7 @@ class UserRegister(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
-    totp_code: Optional[str] = None
+    totp_code: str | None = None
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str

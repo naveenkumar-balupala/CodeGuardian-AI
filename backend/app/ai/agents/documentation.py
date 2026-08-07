@@ -1,4 +1,5 @@
-from typing import Dict, Any
+from typing import Any
+
 from app.ai.agents.state import AgentState, DocumentationAgentOutput
 from app.core.logging import get_logger
 
@@ -13,7 +14,7 @@ class DocumentationAgent:
     """Documentation Agent auditing OpenAPI specs and README quality."""
 
     @staticmethod
-    def audit_documentation_tool() -> Dict[str, Any]:
+    def audit_documentation_tool() -> dict[str, Any]:
         """Tool: Audits OpenAPI swagger schemas and docstrings."""
         return {
             "readme_quality_score": 95,
