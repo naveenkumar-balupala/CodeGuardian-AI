@@ -2,7 +2,6 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 from sqlalchemy import String, Enum as SQLEnum, ForeignKey, DateTime, Text, Index
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -11,8 +10,8 @@ from app.models.enums import ScanType, ScanStatus
 class Scan(Base):
     """Security Scan Execution record."""
 
-    repository_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False, index=True)
-    triggered_by_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    repository_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False, index=True)
+    triggered_by_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     
     scan_type: Mapped[ScanType] = mapped_column(SQLEnum(ScanType), default=ScanType.FULL_AUDIT, nullable=False)
     status: Mapped[ScanStatus] = mapped_column(SQLEnum(ScanStatus), default=ScanStatus.PENDING, nullable=False, index=True)

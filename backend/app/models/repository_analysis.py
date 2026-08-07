@@ -1,28 +1,30 @@
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
-from sqlalchemy import String, Boolean, ForeignKey, DateTime, Text, Index
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import String, Boolean, ForeignKey, DateTime, Text, Index, JSON
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
+
+JSON_TYPE = JSON().with_variant(JSONB, "postgresql")
 
 class RepositoryAnalysis(Base):
     """Stores automated technology detection and architecture analysis for a repository."""
     __tablename__ = "repo_analyses"
 
-    repository_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False, index=True)
+    repository_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False, index=True)
 
-    languages: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict) # e.g. {"Python": 45, "TypeScript": 40, "HTML/CSS": 15}
-    frameworks: Mapped[list] = mapped_column(JSONB, nullable=False, default=list) # e.g. ["Next.js", "FastAPI", "React", "Tailwind CSS"]
-    architecture_style: Mapped[str] = mapped_column(String(64), default="MONOREPO", nullable=False) # MONOREPO, MICROSERVICES, LAYERED_MONOLITH, SERVERLESS, SPA
-    databases: Mapped[list] = mapped_column(JSONB, nullable=False, default=list) # e.g. ["PostgreSQL", "Redis"]
-    ci_cd_tools: Mapped[list] = mapped_column(JSONB, nullable=False, default=list) # e.g. ["GitHub Actions"]
-    docker_configs: Mapped[list] = mapped_column(JSONB, nullable=False, default=list) # e.g. ["Dockerfile", "docker-compose.yml"]
-    package_managers: Mapped[list] = mapped_column(JSONB, nullable=False, default=list) # e.g. ["npm", "pip"]
+    languages: Mapped[dict] = mapped_column(JSON_TYPE, nullable=False, default=dict)
+    frameworks: Mapped[list] = mapped_column(JSON_TYPE, nullable=False, default=list)
+    architecture_style: Mapped[str] = mapped_column(String(64), default="MONOREPO", nullable=False)
+    databases: Mapped[list] = mapped_column(JSON_TYPE, nullable=False, default=list)
+    ci_cd_tools: Mapped[list] = mapped_column(JSON_TYPE, nullable=False, default=list)
+    docker_configs: Mapped[list] = mapped_column(JSON_TYPE, nullable=False, default=list)
+    package_managers: Mapped[list] = mapped_column(JSON_TYPE, nullable=False, default=list)
     has_swagger: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     
-    dependencies: Mapped[list] = mapped_column(JSONB, nullable=False, default=list) # List of {"name": "fastapi", "version": ">=0.111.0", "category": "backend"}
+    dependencies: Mapped[list] = mapped_column(JSON_TYPE, nullable=False, default=list)
     summary_report: Mapped[str] = mapped_column(Text, nullable=False)
 
     scanned_at: Mapped[datetime] = mapped_column(

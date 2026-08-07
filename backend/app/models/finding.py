@@ -1,17 +1,19 @@
 import uuid
 from typing import List, Optional
-from sqlalchemy import String, Text, Integer, Float, Enum as SQLEnum, ForeignKey, Index
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import String, Text, Integer, Float, Enum as SQLEnum, ForeignKey, Index, JSON
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, SoftDeleteMixin
 from app.models.enums import SeverityLevel, FindingStatus
 
+JSON_TYPE = JSON().with_variant(JSONB, "postgresql")
+
 class Finding(Base, SoftDeleteMixin):
     """Vulnerability / Security finding record."""
 
-    scan_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("scans.id", ondelete="CASCADE"), nullable=False, index=True)
-    repository_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False, index=True)
+    scan_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("scans.id", ondelete="CASCADE"), nullable=False, index=True)
+    repository_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False, index=True)
     
     rule_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     title: Mapped[str] = mapped_column(String(512), nullable=False)
@@ -24,7 +26,7 @@ class Finding(Base, SoftDeleteMixin):
     line_number: Mapped[int] = mapped_column(Integer, nullable=False)
     cwe_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     cvss_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    extra_metadata: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    extra_metadata: Mapped[Optional[dict]] = mapped_column(JSON_TYPE, nullable=True)
 
     # Relationships
     scan: Mapped["Scan"] = relationship("Scan", back_populates="findings")
@@ -40,8 +42,8 @@ class FindingHistory(Base):
     """Immutable audit trail for finding status changes."""
     __tablename__ = "finding_history"
 
-    finding_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("findings.id", ondelete="CASCADE"), nullable=False, index=True)
-    changed_by_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    finding_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("findings.id", ondelete="CASCADE"), nullable=False, index=True)
+    changed_by_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     
     previous_status: Mapped[FindingStatus] = mapped_column(SQLEnum(FindingStatus), nullable=False)
     new_status: Mapped[FindingStatus] = mapped_column(SQLEnum(FindingStatus), nullable=False)
@@ -55,7 +57,7 @@ class AIRemediation(Base):
     """AI Generated code fix and remediation plan."""
     __tablename__ = "ai_remediations"
 
-    finding_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("findings.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    finding_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("findings.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
     
     suggested_fix_diff: Mapped[str] = mapped_column(Text, nullable=False)
     explanation: Mapped[str] = mapped_column(Text, nullable=False)

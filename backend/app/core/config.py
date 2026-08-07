@@ -34,7 +34,8 @@ class Settings(BaseSettings):
             return [i.strip() for i in v.split(",")]
         return v
 
-    # PostgreSQL Database
+    # Database Configuration
+    USE_SQLITE_DEV: bool = True
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_PORT: int = 5432
     POSTGRES_USER: str = "codeguardian"
@@ -43,6 +44,9 @@ class Settings(BaseSettings):
 
     @property
     def ASYNC_DATABASE_URI(self) -> str:
+        # Use lightweight zero-dependency SQLite for local standalone development
+        if self.USE_SQLITE_DEV or os.getenv("USE_SQLITE_DEV", "true").lower() == "true":
+            return "sqlite+aiosqlite:///./codeguardian.db"
         return (
             f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"

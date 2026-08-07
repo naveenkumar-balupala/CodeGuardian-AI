@@ -13,6 +13,8 @@ from app.models.enums import (
 from app.models.user import User, Organization, OrganizationMember, RefreshToken
 from app.models.repository import Repository, APIKey
 from app.models.repository_analysis import RepositoryAnalysis
+from app.models.code_review import CodeReview
+from app.models.security_agent_report import SecurityAgentReport
 from app.models.scan import Scan
 from app.models.finding import Finding, FindingHistory, AIRemediation
 from app.models.audit import AuditLog
@@ -35,6 +37,8 @@ __all__ = [
     "RefreshToken",
     "Repository",
     "RepositoryAnalysis",
+    "CodeReview",
+    "SecurityAgentReport",
     "APIKey",
     "Scan",
     "Finding",

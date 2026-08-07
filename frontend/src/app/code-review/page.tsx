@@ -1,0 +1,169 @@
+'use client';
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { DashboardHeader } from '@/components/layout/dashboard-header';
+import { ProtectedRoute } from '@/components/auth/protected-route';
+import { ReviewScoreCard } from '@/components/code-review/review-score-card';
+import { IssueItemCard } from '@/components/code-review/issue-item-card';
+import { CodeReviewService } from '@/services/code-review.service';
+import { RepositoryService } from '@/services/repository.service';
+import { Repository } from '@/types/repository';
+import { CodeReviewResponse } from '@/types/code-review';
+import { CheckCircle2, Play, Loader2, Filter, AlertTriangle } from 'lucide-react';
+
+export default function CodeReviewPage() {
+  const [repositories, setRepositories] = useState<Repository[]>([]);
+  const [selectedRepoId, setSelectedRepoId] = useState<string>('');
+  const [review, setReview] = useState<CodeReviewResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [reviewing, setReviewing] = useState(false);
+  
+  const [toolFilter, setToolFilter] = useState<string>('ALL');
+  const [severityFilter, setSeverityFilter] = useState<string>('ALL');
+
+  useEffect(() => {
+    RepositoryService.listRepositories().then((res) => {
+      setRepositories(res.data);
+      if (res.data.length > 0) {
+        setSelectedRepoId(res.data[0].id);
+      }
+    });
+  }, []);
+
+  const fetchReviewData = useCallback(async (repoId: string) => {
+    try {
+      setLoading(true);
+      const res = await CodeReviewService.getLatestReview(repoId);
+      setReview(res.data);
+    } catch {
+      // Ignore if no review exists yet
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedRepoId) {
+      fetchReviewData(selectedRepoId);
+    }
+  }, [selectedRepoId, fetchReviewData]);
+
+  const handleTriggerReview = async () => {
+    if (!selectedRepoId) return;
+    setReviewing(true);
+    try {
+      const res = await CodeReviewService.triggerReview(selectedRepoId);
+      setReview(res.data);
+    } catch (err: any) {
+      alert(err.message || 'Code review trigger failed.');
+    } finally {
+      setReviewing(false);
+    }
+  };
+
+  const filteredIssues = review?.issues.filter((issue) => {
+    const matchesTool = toolFilter === 'ALL' || issue.tool === toolFilter;
+    const matchesSeverity = severityFilter === 'ALL' || issue.severity === severityFilter;
+    return matchesTool && matchesSeverity;
+  }) || [];
+
+  return (
+    <ProtectedRoute>
+      <div className="min-h-screen bg-background text-foreground flex flex-col">
+        <DashboardHeader />
+
+        <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 md:px-8 space-y-8">
+          {/* Top Header & Repository Selector */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-6 w-6 text-primary" />
+                <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">AI Automated Code Review</h1>
+              </div>
+              <p className="text-slate-400 text-xs md:text-sm mt-1">
+                Integrated static analyzers (Semgrep, SonarQube, Bandit, ESLint, Pylint) with AI explanations & patch diffs
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <select
+                value={selectedRepoId}
+                onChange={(e) => setSelectedRepoId(e.target.value)}
+                className="rounded-xl border border-border bg-card px-3 py-2 text-xs text-foreground font-semibold focus:border-primary focus:outline-none"
+              >
+                {repositories.map((repo) => (
+                  <option key={repo.id} value={repo.id}>
+                    {repo.full_name}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                onClick={handleTriggerReview}
+                disabled={reviewing || !selectedRepoId}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition shadow-lg shadow-primary/20"
+              >
+                {reviewing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4 fill-current" />}
+                <span>{reviewing ? 'Running Code Review...' : 'Run Code Review'}</span>
+              </button>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="flex h-96 items-center justify-center">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            </div>
+          ) : review ? (
+            <div className="space-y-8">
+              {/* Composite Score Card */}
+              <ReviewScoreCard review={review} />
+
+              {/* Filter Toolbar */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-border bg-card/60 p-4 backdrop-blur">
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                  <Filter className="h-4 w-4 text-primary" />
+                  <span className="font-semibold uppercase tracking-wider">Filter Tools:</span>
+                </div>
+
+                <div className="flex items-center gap-2 overflow-x-auto text-xs w-full sm:w-auto">
+                  {['ALL', 'Semgrep', 'SonarQube', 'Bandit', 'ESLint', 'Pylint'].map((tool) => (
+                    <button
+                      key={tool}
+                      onClick={() => setToolFilter(tool)}
+                      className={`px-3 py-1.5 rounded-lg font-semibold transition ${
+                        toolFilter === tool ? 'bg-primary text-primary-foreground' : 'bg-background border border-border text-slate-400'
+                      }`}
+                    >
+                      {tool}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Issues List */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-bold tracking-tight text-foreground">
+                    Analyzed Issues & AI Explanations ({filteredIssues.length})
+                  </h3>
+                </div>
+
+                {filteredIssues.length === 0 ? (
+                  <div className="p-8 text-center rounded-2xl border border-dashed border-border bg-card/40">
+                    <p className="text-xs text-slate-400">No issues found matching the selected tool filter.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredIssues.map((issue) => (
+                      <IssueItemCard key={issue.id} issue={issue} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : null}
+        </main>
+      </div>
+    </ProtectedRoute>
+  );
+}
