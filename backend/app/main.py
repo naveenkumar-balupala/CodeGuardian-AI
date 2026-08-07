@@ -1,7 +1,9 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.exceptions import RequestValidationError
+from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy import select
 
 from app.core.config import settings
@@ -23,6 +25,15 @@ from app.api.v1.router import api_v1_router
 
 setup_logging()
 logger = get_logger(__name__)
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        return response
 
 async def auto_init_db():
     """Auto-creates DB tables and seeds admin user if database is empty."""
@@ -98,7 +109,9 @@ if settings.ALLOWED_HOSTS:
         allow_headers=["*"],
     )
 
-# Add Request ID correlation tracking & Rate Limiting middleware
+# Add Security, Compression, Request ID correlation tracking & Rate Limiting middleware
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(RequestIDMiddleware)
 app.add_middleware(RateLimitMiddleware)
 

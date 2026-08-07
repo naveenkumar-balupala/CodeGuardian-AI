@@ -18,6 +18,12 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = "change_this_to_a_super_secret_production_key_32_chars_min"
 
+    @field_validator("SECRET_KEY", mode="after")
+    def validate_secret_key(cls, v: str, info) -> str:
+        if os.getenv("ENVIRONMENT") == "production" and "change_this" in v:
+            raise ValueError("SECRET_KEY must be overridden with a secure secret in production!")
+        return v
+
     # JWT & Auth Security
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
