@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import health, auth, dashboard, repositories, scanner, ai_agents, code_review, security_agent
+from app.api.v1.endpoints import health, auth, dashboard, repositories, scanner, ai_agents, code_review, security_agent, architecture
 
 api_v1_router = APIRouter()
 
@@ -12,3 +12,4 @@ api_v1_router.include_router(scanner.router, tags=["Repository Tech Scanner Engi
 api_v1_router.include_router(ai_agents.router, prefix="/ai/agents", tags=["LangGraph Multi-Agent Orchestrator"])
 api_v1_router.include_router(code_review.router, tags=["AI Code Review Engine"])
 api_v1_router.include_router(security_agent.router, tags=["Security Agent Engine"])
+api_v1_router.include_router(architecture.router, tags=["Architecture Analyzer & Visualizer Engine"])
