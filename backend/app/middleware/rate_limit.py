@@ -5,9 +5,9 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
+from app.core import redis as redis_module
 from app.core.config import settings
 from app.core.logging import get_logger
-from app.core.redis import redis_client
 
 logger = get_logger(__name__)
 
@@ -19,7 +19,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if not request.url.path.startswith(f"{settings.API_V1_STR}/auth"):
             return await call_next(request)
 
-        if not redis_client:
+        if not redis_module.redis_client:
             # Fallback if Redis unavailable
             return await call_next(request)
 
@@ -28,9 +28,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         window_key = f"rate_limit:{client_ip}:{current_time // 60}"
 
         try:
-            current_requests = await redis_client.incr(window_key)
+            current_requests = await redis_module.redis_client.incr(window_key)
             if current_requests == 1:
-                await redis_client.expire(window_key, 60)
+                await redis_module.redis_client.expire(window_key, 60)
 
             if current_requests > settings.RATE_LIMIT_PER_MINUTE:
                 logger.warning("Rate limit exceeded", client_ip=client_ip, path=request.url.path)
