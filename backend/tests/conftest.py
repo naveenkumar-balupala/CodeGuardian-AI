@@ -13,7 +13,7 @@ from app.models.base import Base
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(scope="function")
 async def test_engine():
     engine = create_async_engine(TEST_DATABASE_URL, echo=False, future=True)
     async with engine.begin() as conn:
