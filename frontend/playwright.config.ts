@@ -11,7 +11,11 @@ export default defineConfig({
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    // Use saved authenticated state produced by globalSetup
+    storageState: 'e2e/.auth.json',
   },
+  // Ensure global setup runs once to create authenticated storage state
+  globalSetup: require.resolve('./e2e/global-setup'),
   projects: [
     {
       name: 'chromium',

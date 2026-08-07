@@ -43,3 +43,9 @@ backend/*.sqlite
 docker/data/
 postgres_data/
 redis_data/
+
+# Playwright Test Reports and Auth State
+frontend/playwright-report/
+frontend/test-results/
+frontend/e2e/.auth.json
+
