@@ -17,6 +17,7 @@ from app.models.code_review import CodeReview
 from app.models.security_agent_report import SecurityAgentReport
 from app.models.architecture_analysis import ArchitectureReport
 from app.models.report_export import ReportExport
+from app.models.chat_session import ChatSession, ChatMessage
 from app.models.scan import Scan
 from app.models.finding import Finding, FindingHistory, AIRemediation
 from app.models.audit import AuditLog
@@ -43,6 +44,8 @@ __all__ = [
     "SecurityAgentReport",
     "ArchitectureReport",
     "ReportExport",
+    "ChatSession",
+    "ChatMessage",
     "APIKey",
     "Scan",
     "Finding",
