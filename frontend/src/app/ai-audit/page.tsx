@@ -37,14 +37,17 @@ export default function AIAuditPage() {
       });
   }, []);
 
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const handleRunAudit = async () => {
     if (!selectedRepoId) return;
     setIsRunning(true);
+    setErrorMessage(null);
     try {
       const response = await AIAgentsService.orchestrateAudit(selectedRepoId);
       setAuditData(response?.data || null);
     } catch (err: any) {
-      alert(err.message || 'Multi-agent orchestration failed.');
+      setErrorMessage(err.message || 'Multi-agent orchestration failed. Please verify API backend is running on http://localhost:8000.');
     } finally {
       setIsRunning(false);
     }
@@ -56,6 +59,17 @@ export default function AIAuditPage() {
         <DashboardHeader />
 
         <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 md:px-8 space-y-8">
+          {errorMessage && (
+            <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-xs font-semibold text-red-400 flex items-center justify-between shadow-sm animate-in fade-in duration-300">
+              <div className="flex items-center gap-2">
+                <Cpu className="h-4 w-4 text-red-400" />
+                <span>{errorMessage}</span>
+              </div>
+              <button onClick={() => setErrorMessage(null)} className="text-red-400/70 hover:text-red-400 text-xs">
+                &times;
+              </button>
+            </div>
+          )}
           {/* Header Action Row */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>

@@ -23,6 +23,8 @@ export default function SecurityAgentPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
   const [severityFilter, setSeverityFilter] = useState<string>('ALL');
 
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
   useEffect(() => {
     RepositoryService.listRepositories()
       .then((res) => {
@@ -42,6 +44,7 @@ export default function SecurityAgentPage() {
   const fetchReportData = useCallback(async (repoId: string) => {
     try {
       setLoading(true);
+      setStatusMessage(null);
       const res = await SecurityAgentService.getLatestReport(repoId);
       setReport(res?.data || null);
     } catch {
@@ -57,14 +60,24 @@ export default function SecurityAgentPage() {
     }
   }, [selectedRepoId, fetchReportData]);
 
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const handleTriggerScan = async () => {
     if (!selectedRepoId) return;
     setScanning(true);
+    setStatusMessage(null);
+    setErrorMessage(null);
+    const startTime = Date.now();
     try {
       const res = await SecurityAgentService.triggerScan(selectedRepoId);
+      const elapsedTime = Date.now() - startTime;
+      if (elapsedTime < 1200) {
+        await new Promise((resolve) => setTimeout(resolve, 1200 - elapsedTime));
+      }
       setReport(res.data);
+      setStatusMessage(`SAST Security Scan completed at ${new Date().toLocaleTimeString()}! Risk Score: ${res.data.risk_score}/100 (${res.data.risk_level} Risk Level) with ${res.data.findings.length} findings.`);
     } catch (err: any) {
-      alert(err.message || 'Security Agent scan failed.');
+      setErrorMessage(err.message || 'Security Agent scan failed. Please verify API backend is running on http://localhost:8000.');
     } finally {
       setScanning(false);
     }
@@ -82,6 +95,29 @@ export default function SecurityAgentPage() {
         <DashboardHeader />
 
         <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 md:px-8 space-y-8">
+          {errorMessage && (
+            <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-xs font-semibold text-red-400 flex items-center justify-between shadow-sm animate-in fade-in duration-300">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="h-4 w-4 text-red-400" />
+                <span>{errorMessage}</span>
+              </div>
+              <button onClick={() => setErrorMessage(null)} className="text-red-400/70 hover:text-red-400 text-xs">
+                &times;
+              </button>
+            </div>
+          )}
+          {statusMessage && (
+            <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs font-semibold text-red-400 flex items-center justify-between shadow-sm animate-in fade-in duration-300">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="h-4 w-4 text-red-400" />
+                <span>{statusMessage}</span>
+              </div>
+              <button onClick={() => setStatusMessage(null)} className="text-red-400/70 hover:text-red-400 text-xs">
+                &times;
+              </button>
+            </div>
+          )}
+
           {/* Header Action Row */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>

@@ -22,6 +22,8 @@ export default function CodeReviewPage() {
   const [toolFilter, setToolFilter] = useState<string>('ALL');
   const [severityFilter, setSeverityFilter] = useState<string>('ALL');
 
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
   useEffect(() => {
     RepositoryService.listRepositories()
       .then((res) => {
@@ -41,6 +43,7 @@ export default function CodeReviewPage() {
   const fetchReviewData = useCallback(async (repoId: string) => {
     try {
       setLoading(true);
+      setStatusMessage(null);
       const res = await CodeReviewService.getLatestReview(repoId);
       setReview(res?.data || null);
     } catch {
@@ -56,14 +59,24 @@ export default function CodeReviewPage() {
     }
   }, [selectedRepoId, fetchReviewData]);
 
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const handleTriggerReview = async () => {
     if (!selectedRepoId) return;
     setReviewing(true);
+    setStatusMessage(null);
+    setErrorMessage(null);
+    const startTime = Date.now();
     try {
       const res = await CodeReviewService.triggerReview(selectedRepoId);
+      const elapsedTime = Date.now() - startTime;
+      if (elapsedTime < 1200) {
+        await new Promise((resolve) => setTimeout(resolve, 1200 - elapsedTime));
+      }
       setReview(res.data);
+      setStatusMessage(`Code Review successfully updated at ${new Date().toLocaleTimeString()}! Overall Score: ${res.data.overall_score}/100 (Grade: ${res.data.grade})`);
     } catch (err: any) {
-      alert(err.message || 'Code review trigger failed.');
+      setErrorMessage(err.message || 'Code review trigger failed. Please verify API backend is running on http://localhost:8000.');
     } finally {
       setReviewing(false);
     }
@@ -81,6 +94,29 @@ export default function CodeReviewPage() {
         <DashboardHeader />
 
         <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 md:px-8 space-y-8">
+          {errorMessage && (
+            <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-xs font-semibold text-red-400 flex items-center justify-between shadow-sm animate-in fade-in duration-300">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-red-400" />
+                <span>{errorMessage}</span>
+              </div>
+              <button onClick={() => setErrorMessage(null)} className="text-red-400/70 hover:text-red-400 text-xs">
+                &times;
+              </button>
+            </div>
+          )}
+          {statusMessage && (
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-xs font-semibold text-emerald-400 flex items-center justify-between shadow-sm animate-in fade-in duration-300">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                <span>{statusMessage}</span>
+              </div>
+              <button onClick={() => setStatusMessage(null)} className="text-emerald-400/70 hover:text-emerald-400 text-xs">
+                &times;
+              </button>
+            </div>
+          )}
+
           {/* Top Header & Repository Selector */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>

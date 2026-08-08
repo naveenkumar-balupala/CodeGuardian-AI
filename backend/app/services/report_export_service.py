@@ -38,14 +38,14 @@ class ReportExportService:
         arch_query = select(ArchitectureReport).where(ArchitectureReport.repository_id == repo_id).order_by(ArchitectureReport.scanned_at.desc())
         arch_report = (await db.execute(arch_query)).scalars().first()
 
-        review_query = select(CodeReview).where(CodeReview.repository_id == repo_id).order_by(CodeReview.created_at.desc())
+        review_query = select(CodeReview).where(CodeReview.repository_id == repo_id).order_by(CodeReview.reviewed_at.desc())
         review_report = (await db.execute(review_query)).scalars().first()
 
         # Build Executive Summary
         sec_risk = sec_report.risk_score if sec_report else 25
         sec_level = sec_report.risk_level if sec_report else "LOW"
         arch_pattern = arch_report.pattern if arch_report else "MONOREPO"
-        review_score = review_report.quality_score if review_report else 88
+        review_score = review_report.overall_score if review_report else 88
 
         executive_summary = (
             f"Executive Summary for {repo.full_name}:\n"
@@ -69,17 +69,22 @@ class ReportExportService:
         file_name = f"report_{repo.name}_{uuid.uuid4().hex[:8]}.{file_ext}"
         file_path = os.path.join(REPORTS_DIR, file_name)
 
-        # Write formatted document file
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(f"=== {req.title.upper()} ===\n")
-            f.write(f"Format: {req.format}\n")
-            f.write(f"Company: {req.branding.company_name}\n")
-            f.write(f"Author: {req.branding.author}\n")
-            f.write(f"Generated At: {datetime.now(UTC).isoformat()}\n\n")
-            f.write(f"{executive_summary}\n\n")
-            for sec in sections:
-                f.write(f"--- {sec['title']} ---\n")
-                f.write(f"{sec['content']}\n\n")
+        # Build genuine PDF, DOCX, or PPTX binary document files
+        try:
+            if file_ext == "pdf":
+                ReportExportService._generate_pdf(file_path, req.title, req.branding.company_name, req.branding.author, sections)
+            elif file_ext == "docx":
+                ReportExportService._generate_docx(file_path, req.title, req.branding.company_name, req.branding.author, sections)
+            elif file_ext == "pptx":
+                ReportExportService._generate_pptx(file_path, req.title, req.branding.company_name, req.branding.author, sections)
+            else:
+                # Text fallback if format unknown
+                with open(file_path, "w", encoding="utf-8") as f:
+                    f.write(f"=== {req.title.upper()} ===\n\n{executive_summary}\n")
+        except Exception as err:
+            logger.error("Binary document generation failed, creating text fallback", error=str(err))
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(f"=== {req.title.upper()} ===\n\n{executive_summary}\n")
 
         file_size = os.path.getsize(file_path)
         download_url = f"/api/v1/reports/download/{file_name}"
@@ -119,3 +124,99 @@ class ReportExportService:
         query = select(ReportExport).where(ReportExport.repository_id == repo_id).order_by(ReportExport.generated_at.desc())
         result = await db.execute(query)
         return list(result.scalars().all())
+
+    @staticmethod
+    def _generate_pdf(file_path: str, title: str, company: str, author: str, sections: list[dict[str, str]]):
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import letter
+        from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+        from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+
+        doc = SimpleDocTemplate(file_path, pagesize=letter, leftMargin=36, rightMargin=36, topMargin=36, bottomMargin=36)
+        styles = getSampleStyleSheet()
+        story = []
+
+        title_style = ParagraphStyle(
+            "DocTitle",
+            parent=styles["Heading1"],
+            fontSize=20,
+            leading=24,
+            textColor=colors.HexColor("#0f172a"),
+            spaceAfter=6,
+        )
+        meta_style = ParagraphStyle(
+            "DocMeta",
+            parent=styles["Normal"],
+            fontSize=9,
+            leading=13,
+            textColor=colors.HexColor("#475569"),
+            spaceAfter=12,
+        )
+        heading_style = ParagraphStyle(
+            "DocH2",
+            parent=styles["Heading2"],
+            fontSize=13,
+            leading=17,
+            textColor=colors.HexColor("#1e293b"),
+            spaceBefore=10,
+            spaceAfter=4,
+        )
+        body_style = ParagraphStyle(
+            "DocBody",
+            parent=styles["Normal"],
+            fontSize=9,
+            leading=13,
+            textColor=colors.HexColor("#334155"),
+            spaceAfter=6,
+        )
+
+        story.append(Paragraph(title.upper(), title_style))
+        story.append(Paragraph(f"<b>Organization:</b> {company} &nbsp;|&nbsp; <b>Author:</b> {author} &nbsp;|&nbsp; <b>Generated:</b> {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}", meta_style))
+        story.append(Spacer(1, 10))
+
+        for sec in sections:
+            story.append(Paragraph(sec["title"], heading_style))
+            content_html = sec["content"].replace("\n", "<br/>")
+            story.append(Paragraph(content_html, body_style))
+            story.append(Spacer(1, 6))
+
+        doc.build(story)
+
+    @staticmethod
+    def _generate_docx(file_path: str, title: str, company: str, author: str, sections: list[dict[str, str]]):
+        from docx import Document
+
+        doc = Document()
+        doc.add_heading(title, level=0)
+
+        meta = doc.add_paragraph()
+        meta.add_run("Organization: ").bold = True
+        meta.add_run(f"{company}\n")
+        meta.add_run("Author: ").bold = True
+        meta.add_run(f"{author}\n")
+        meta.add_run("Generated At: ").bold = True
+        meta.add_run(f"{datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')}\n")
+
+        for sec in sections:
+            doc.add_heading(sec["title"], level=1)
+            doc.add_paragraph(sec["content"])
+
+        doc.save(file_path)
+
+    @staticmethod
+    def _generate_pptx(file_path: str, title: str, company: str, author: str, sections: list[dict[str, str]]):
+        from pptx import Presentation
+
+        prs = Presentation()
+        title_slide_layout = prs.slide_layouts[0]
+        slide = prs.slides.add_slide(title_slide_layout)
+        slide.shapes.title.text = title
+        slide.placeholders[1].text = f"Organization: {company}\nAuthor: {author}\nGenerated: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')}"
+
+        bullet_slide_layout = prs.slide_layouts[1]
+        for sec in sections:
+            slide = prs.slides.add_slide(bullet_slide_layout)
+            slide.shapes.title.text = sec["title"]
+            slide.placeholders[1].text_frame.text = sec["content"]
+
+        prs.save(file_path)

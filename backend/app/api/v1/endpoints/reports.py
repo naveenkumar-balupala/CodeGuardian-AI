@@ -44,12 +44,20 @@ async def download_report_file(
     if not os.path.exists(file_path):
         raise NotFoundException("Report file not found.")
 
+    media_type = "application/octet-stream"
+    if file_name.endswith(".pdf"):
+        media_type = "application/pdf"
+    elif file_name.endswith(".docx"):
+        media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    elif file_name.endswith(".pptx"):
+        media_type = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+
     return FileResponse(
         path=file_path,
         filename=file_name,
-        media_type="application/octet-stream",
+        media_type=media_type,
         headers={
-            "Content-Disposition": f'attachment; filename="{file_name}"'
+            "Content-Disposition": f'inline; filename="{file_name}"' if file_name.endswith(".pdf") else f'attachment; filename="{file_name}"'
         },
     )
 

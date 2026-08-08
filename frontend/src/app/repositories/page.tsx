@@ -34,13 +34,16 @@ export default function RepositoriesPage() {
     return () => clearInterval(interval);
   }, []);
 
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to remove this repository from CodeGuardian AI?')) {
       try {
+        setErrorMessage(null);
         await RepositoryService.deleteRepository(id);
         fetchRepositories();
       } catch (err: any) {
-        alert(err.message || 'Failed to delete repository.');
+        setErrorMessage(err.message || 'Failed to delete repository.');
       }
     }
   };
@@ -57,6 +60,14 @@ export default function RepositoriesPage() {
         <DashboardHeader />
 
         <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 md:px-8 space-y-8">
+          {errorMessage && (
+            <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-xs font-semibold text-red-400 flex items-center justify-between shadow-sm animate-in fade-in duration-300">
+              <span>{errorMessage}</span>
+              <button onClick={() => setErrorMessage(null)} className="text-red-400/70 hover:text-red-400 text-xs">
+                &times;
+              </button>
+            </div>
+          )}
           {/* Header Action Row */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>

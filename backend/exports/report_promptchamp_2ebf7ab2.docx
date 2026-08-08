@@ -1,0 +1,37 @@
+=== ENTERPRISE SECURITY & REPOSITORY AUDIT REPORT ===
+Format: DOCX
+Company: CodeGuardian AI Corp
+Author: Automated Security & Audit Engine
+Generated At: 2026-08-08T05:05:16.873302+00:00
+
+Executive Summary for naveenkumar-balupala/promptchamp:
+- Overall Code Quality Score: 88/100
+- Security Risk Score: 65/100 (HIGH Risk Level)
+- Architecture Pattern: MONOREPO (Coupling Index: 3.3)
+- Compliance: OWASP Top 10, SOLID Principles, and AI Automated Remediation standard applied.
+
+Prepared by: Automated Security & Audit Engine for CodeGuardian AI Corp.
+
+--- 1. Executive Summary ---
+Executive Summary for naveenkumar-balupala/promptchamp:
+- Overall Code Quality Score: 88/100
+- Security Risk Score: 65/100 (HIGH Risk Level)
+- Architecture Pattern: MONOREPO (Coupling Index: 3.3)
+- Compliance: OWASP Top 10, SOLID Principles, and AI Automated Remediation standard applied.
+
+Prepared by: Automated Security & Audit Engine for CodeGuardian AI Corp.
+
+--- 2. Security & CVSS Risk Breakdown ---
+Critical: 1, High: 2, Medium: 1, Low: 1
+
+--- 3. Software Architecture & Dependency Graph ---
+Pattern: MONOREPO, Coupling Score: 3.3/10.0, SOLID Score: 85%
+
+--- 4. AI Code Review & Maintainability ---
+Quality Score: 88/100, Cyclomatic Complexity: 3.3, Code Smells: 1
+
+--- 5. Strategic Recommendations ---
+1. Parameterize raw SQL queries.
+2. Mandate env vars for secrets.
+3. Decouple HTTP handlers from direct ORM sessions.
+

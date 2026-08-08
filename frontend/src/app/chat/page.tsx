@@ -105,16 +105,19 @@ export default function ChatPage() {
     }
   };
 
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const handleSendMessage = async (customPrompt?: string) => {
     const textToSend = customPrompt || inputMessage;
     if (!textToSend.trim() || sending) return;
 
     setSending(true);
+    setErrorMessage(null);
     if (!customPrompt) setInputMessage('');
 
-    try {
-      let targetSession = activeSession;
+    let targetSession = activeSession;
 
+    try {
       // Auto-create session if none active
       if (!targetSession && selectedRepoId) {
         const created = await ChatService.createSession(selectedRepoId, 'Codebase Q&A Session');
@@ -123,7 +126,7 @@ export default function ChatPage() {
           setSessions((prev) => [created.data, ...prev]);
           setActiveSession(created.data);
         } else {
-          throw new Error('Unable to initialize chat session.');
+          throw new Error('Unable to connect to CodeGuardian AI backend server at http://localhost:8000.');
         }
       }
 
@@ -151,7 +154,21 @@ export default function ChatPage() {
         );
       }
     } catch (err: any) {
-      alert(err.message || 'Failed to send message to RAG agent.');
+      const errorContent = err.message || 'Unable to connect to backend server at http://localhost:8000.';
+      setErrorMessage(errorContent);
+
+      const assistantErrorMsg: ChatMessageResponse = {
+        id: Math.random().toString(),
+        session_id: targetSession?.id || 'error',
+        role: 'assistant',
+        content: `⚠️ **Connection Error**: ${errorContent}\n\n*Please ensure the backend API server is running on port 8000 (e.g. \`cd backend && uvicorn app.main:app --reload\`).*`,
+        referenced_files: [],
+        created_at: new Date().toISOString(),
+      };
+
+      setActiveSession((prev) =>
+        prev ? { ...prev, messages: [...(prev.messages || []), assistantErrorMsg] } : prev
+      );
     } finally {
       setSending(false);
     }
@@ -163,6 +180,18 @@ export default function ChatPage() {
         <DashboardHeader />
 
         <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 md:px-8 space-y-6 flex flex-col">
+          {errorMessage && (
+            <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-xs font-semibold text-red-400 flex items-center justify-between shadow-sm animate-in fade-in duration-300">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-red-400" />
+                <span>{errorMessage}</span>
+              </div>
+              <button onClick={() => setErrorMessage(null)} className="text-red-400/70 hover:text-red-400 text-xs">
+                &times;
+              </button>
+            </div>
+          )}
+
           {/* Header Action Row */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>

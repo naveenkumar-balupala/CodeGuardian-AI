@@ -45,10 +45,11 @@ export default function RepositoryDetailPage() {
   const handleTriggerScan = async () => {
     try {
       setScanning(true);
+      setError(null);
       const response = await ScannerService.triggerScan(repoId);
       setAnalysis(response.data);
     } catch (err: any) {
-      alert(err.message || 'Scan trigger failed.');
+      setError(err.message || 'Scan trigger failed. Please verify API backend is running on http://localhost:8000.');
     } finally {
       setScanning(false);
     }
