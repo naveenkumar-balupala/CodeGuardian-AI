@@ -10,7 +10,7 @@ import { ChatService } from '@/services/chat.service';
 import { RepositoryService } from '@/services/repository.service';
 import { Repository } from '@/types/repository';
 import { ChatSessionResponse, ChatMessageResponse } from '@/types/chat';
-import { MessageSquare, Send, Loader2, FolderGit2 } from 'lucide-react';
+import { MessageSquare, Send, Loader2, FolderGit2, Sparkles } from 'lucide-react';
 
 export default function ChatPage() {
   const [repositories, setRepositories] = useState<Repository[]>([]);
@@ -21,6 +21,17 @@ export default function ChatPage() {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll timeline to bottom when messages update or assistant is typing
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [activeSession?.messages, sending]);
 
   useEffect(() => {
     RepositoryService.listRepositories()
@@ -96,31 +107,51 @@ export default function ChatPage() {
 
   const handleSendMessage = async (customPrompt?: string) => {
     const textToSend = customPrompt || inputMessage;
-    if (!textToSend.trim() || !activeSession || sending) return;
+    if (!textToSend.trim() || sending) return;
 
     setSending(true);
     if (!customPrompt) setInputMessage('');
 
     try {
+      let targetSession = activeSession;
+
+      // Auto-create session if none active
+      if (!targetSession && selectedRepoId) {
+        const created = await ChatService.createSession(selectedRepoId, 'Codebase Q&A Session');
+        if (created?.data) {
+          targetSession = created.data;
+          setSessions((prev) => [created.data, ...prev]);
+          setActiveSession(created.data);
+        } else {
+          throw new Error('Unable to initialize chat session.');
+        }
+      }
+
+      if (!targetSession) return;
+
       // Optimistic user message append
       const userMsg: ChatMessageResponse = {
         id: Math.random().toString(),
-        session_id: activeSession.id,
+        session_id: targetSession.id,
         role: 'user',
         content: textToSend,
         referenced_files: [],
         created_at: new Date().toISOString(),
       };
 
-      setActiveSession((prev) => (prev ? { ...prev, messages: [...prev.messages, userMsg] } : prev));
+      setActiveSession((prev) =>
+        prev ? { ...prev, messages: [...(prev.messages || []), userMsg] } : targetSession
+      );
 
-      const res = await ChatService.sendMessage(activeSession.id, textToSend);
+      const res = await ChatService.sendMessage(targetSession.id, textToSend);
 
       if (res?.data) {
-        setActiveSession((prev) => (prev ? { ...prev, messages: [...prev.messages, res.data] } : prev));
+        setActiveSession((prev) =>
+          prev ? { ...prev, messages: [...(prev.messages || []), res.data] } : prev
+        );
       }
     } catch (err: any) {
-      alert(err.message || 'Failed to send message.');
+      alert(err.message || 'Failed to send message to RAG agent.');
     } finally {
       setSending(false);
     }
@@ -188,17 +219,31 @@ export default function ChatPage() {
               </div>
 
               {/* Chat Timeline & Message Input */}
-              <div className="md:col-span-3 rounded-2xl border border-border bg-card/60 p-6 shadow-sm backdrop-blur flex flex-col justify-between h-[600px]">
+              <div className="md:col-span-3 rounded-2xl border border-border bg-card/60 p-6 shadow-sm backdrop-blur flex flex-col justify-between h-[650px]">
                 {/* Messages Timeline */}
                 <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-                  {activeSession?.messages.map((msg) => (
-                    <ChatMessageBubble key={msg.id} message={msg} />
-                  ))}
-                  {sending && (
-                    <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
-                      <Loader2 className="h-4 w-4 animate-spin text-primary" /> RAG Engine searching repository context...
+                  {activeSession && activeSession.messages && activeSession.messages.length > 0 ? (
+                    activeSession.messages.map((msg) => (
+                      <ChatMessageBubble key={msg.id} message={msg} />
+                    ))
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-center p-8 space-y-3">
+                      <Sparkles className="h-10 w-10 text-primary animate-pulse" />
+                      <h3 className="text-base font-bold text-foreground">Start RAG Codebase Exploration</h3>
+                      <p className="text-xs text-slate-400 max-w-xs">
+                        Ask any question about architecture, endpoints, or bugs, or click a quick prompt shortcut on the left.
+                      </p>
                     </div>
                   )}
+
+                  {sending && (
+                    <div className="flex items-center gap-2 text-xs text-slate-400 font-mono py-2 bg-primary/5 px-3 rounded-xl border border-primary/20">
+                      <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
+                      <span>CodeGuardian RAG Engine inspecting source files & retrieving context...</span>
+                    </div>
+                  )}
+
+                  <div ref={messagesEndRef} />
                 </div>
 
                 {/* Input Box */}
@@ -219,7 +264,7 @@ export default function ChatPage() {
                   <button
                     type="submit"
                     disabled={sending || !inputMessage.trim()}
-                    className="rounded-xl bg-primary px-5 py-3 text-xs font-bold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition shadow-md shadow-primary/20 flex items-center gap-1.5"
+                    className="rounded-xl bg-primary px-5 py-3 text-xs font-bold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition shadow-md shadow-primary/20 flex items-center gap-1.5 shrink-0"
                   >
                     <Send className="h-4 w-4" /> Send
                   </button>

@@ -109,21 +109,22 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Set CORS middleware
-if settings.ALLOWED_HOSTS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.ALLOWED_HOSTS,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
 # Add Security, Compression, Request ID correlation tracking & Rate Limiting middleware
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(RequestIDMiddleware)
 app.add_middleware(RateLimitMiddleware)
+
+# Set CORS middleware LAST so Starlette executes it FIRST as the outermost layer
+if settings.ALLOWED_HOSTS:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.ALLOWED_HOSTS,
+        allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # Register Exception Handlers
 app.add_exception_handler(AppException, app_exception_handler)

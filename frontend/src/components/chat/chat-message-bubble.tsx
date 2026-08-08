@@ -1,6 +1,7 @@
 import React from 'react';
-import { User, Sparkles, FileCode, Check, Copy } from 'lucide-react';
+import { User, Sparkles, FileCode } from 'lucide-react';
 import { ChatMessageResponse } from '@/types/chat';
+import { MarkdownRenderer } from './markdown-renderer';
 
 interface Props {
   message: ChatMessageResponse;
@@ -17,12 +18,18 @@ export const ChatMessageBubble: React.FC<Props> = ({ message }) => {
         </div>
       )}
 
-      <div className={`max-w-3xl rounded-2xl p-4 space-y-3 ${
-        isUser ? 'bg-primary text-primary-foreground font-medium' : 'bg-card border border-border text-foreground'
-      }`}>
-        <div className="text-xs leading-relaxed whitespace-pre-wrap">
-          {message.content}
-        </div>
+      <div
+        className={`max-w-3xl rounded-2xl p-4 space-y-3 ${
+          isUser
+            ? 'bg-primary text-primary-foreground font-medium shadow-md shadow-primary/10'
+            : 'bg-card border border-border text-foreground shadow-sm'
+        }`}
+      >
+        {isUser ? (
+          <div className="text-xs leading-relaxed whitespace-pre-wrap">{message.content}</div>
+        ) : (
+          <MarkdownRenderer content={message.content} />
+        )}
 
         {/* Source File Citations */}
         {message.referenced_files && message.referenced_files.length > 0 && (

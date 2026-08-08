@@ -26,7 +26,11 @@ class ApiClient {
     };
 
     try {
-      const response = await fetch(url, { ...options, headers });
+      const response = await fetch(url, {
+        mode: 'cors',
+        ...options,
+        headers,
+      });
 
       // Handle 401 Unauthorized with automatic token refresh attempt
       if (
@@ -40,6 +44,7 @@ class ApiClient {
           try {
             const refreshResp = await fetch(`${this.baseUrl}/api/v1/auth/refresh`, {
               method: 'POST',
+              mode: 'cors',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ refresh_token: refreshToken }),
             });
@@ -70,6 +75,14 @@ class ApiClient {
 
       return data;
     } catch (error: any) {
+      // Intercept raw TypeError: Failed to fetch (CORS/Network connection failure)
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        const customErr = new Error(
+          `Unable to connect to CodeGuardian AI backend server at ${this.baseUrl}. Please verify the API server is running.`
+        );
+        console.error(`API Network Failure [${endpoint}]:`, customErr);
+        throw customErr;
+      }
       console.error(`API Error [${endpoint}]:`, error);
       throw error;
     }

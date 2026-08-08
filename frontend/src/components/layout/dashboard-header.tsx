@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   ShieldCheck,
   Search,
@@ -21,6 +22,7 @@ import { DashboardService } from '@/services/dashboard.service';
 import { NotificationAlert } from '@/types/dashboard';
 
 export const DashboardHeader: React.FC = () => {
+  const pathname = usePathname();
   const { user, logout } = useAuth();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationAlert[]>([
@@ -124,16 +126,23 @@ export const DashboardHeader: React.FC = () => {
           </Link>
 
           <nav aria-label="Main Navigation" className="hidden md:flex items-center gap-1.5 border-l border-border pl-4">
-            {navItems.map((item, idx) => (
-              <Link
-                key={idx}
-                href={item.href}
-                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-foreground hover:bg-accent transition focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
-              >
-                <item.icon className="h-3.5 w-3.5 text-primary" />
-                <span>{item.label}</span>
-              </Link>
-            ))}
+            {navItems.map((item, idx) => {
+              const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname?.startsWith(item.href));
+              return (
+                <Link
+                  key={idx}
+                  href={item.href}
+                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
+                    isActive
+                      ? 'bg-primary/10 text-primary border border-primary/30 font-bold shadow-sm'
+                      : 'text-slate-300 hover:text-foreground hover:bg-accent'
+                  }`}
+                >
+                  <item.icon className={`h-3.5 w-3.5 ${isActive ? 'text-primary' : 'text-slate-400'}`} />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
           </nav>
         </div>
 
