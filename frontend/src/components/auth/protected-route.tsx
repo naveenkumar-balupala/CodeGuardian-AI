@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
 import { UserRole } from '@/types/auth';
 import { ShieldAlert, Loader2 } from 'lucide-react';
@@ -27,9 +28,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
         <ShieldAlert className="h-12 w-12 text-yellow-500 mb-4" />
         <h2 className="text-2xl font-bold mb-2">Authentication Required</h2>
         <p className="text-slate-400 mb-6">Please log in to access CodeGuardian AI security platform.</p>
-        <a href="/login" className="px-6 py-2 bg-primary text-primary-foreground font-semibold rounded-md hover:bg-primary/90">
+        <Link href="/login" className="px-6 py-2 bg-primary text-primary-foreground font-semibold rounded-md hover:bg-primary/90">
           Go to Login
-        </a>
+        </Link>
       </div>
     );
   }

@@ -33,7 +33,16 @@ class Settings(BaseSettings):
     ACCOUNT_LOCKOUT_MINUTES: int = 15
 
     # CORS Allowed Origins
-    ALLOWED_HOSTS: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    ALLOWED_HOSTS: list[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+        "http://localhost:3002",
+        "http://127.0.0.1:3002",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ]
 
     @field_validator("ALLOWED_HOSTS", mode="before")
     def assemble_cors_origins(cls, v: str | list[str]) -> list[str] | str:

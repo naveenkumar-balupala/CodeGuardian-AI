@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { Github, GitBranch, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { RepositorySummary } from '@/types/dashboard';
 
@@ -11,9 +12,9 @@ export const RepositoryStatusTable: React.FC<Props> = ({ repositories }) => {
     <div className="rounded-2xl border border-border bg-card/60 p-6 shadow-sm backdrop-blur">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-bold tracking-tight text-foreground">Monitored Repositories</h3>
-        <a href="/repositories" className="text-xs text-primary font-semibold hover:underline flex items-center gap-1">
+        <Link href="/repositories" className="text-xs text-primary font-semibold hover:underline flex items-center gap-1">
           Manage Repositories ({repositories.length}) &rarr;
-        </a>
+        </Link>
       </div>
 
       <div className="overflow-x-auto">

@@ -48,4 +48,8 @@ async def download_report_file(
         path=file_path,
         filename=file_name,
         media_type="application/octet-stream",
+        headers={
+            "Content-Disposition": f'attachment; filename="{file_name}"'
+        },
     )
+

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { DashboardHeader } from '@/components/layout/dashboard-header';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { SecurityRiskScoreCard } from '@/components/security-agent/security-risk-score-card';
@@ -10,7 +11,7 @@ import { SecurityAgentService } from '@/services/security-agent.service';
 import { RepositoryService } from '@/services/repository.service';
 import { Repository } from '@/types/repository';
 import { SecurityAgentReportResponse } from '@/types/security-agent';
-import { ShieldAlert, Play, Loader2, Filter, AlertTriangle } from 'lucide-react';
+import { ShieldAlert, Play, Loader2, Filter, FolderGit2 } from 'lucide-react';
 
 export default function SecurityAgentPage() {
   const [repositories, setRepositories] = useState<Repository[]>([]);
@@ -23,21 +24,28 @@ export default function SecurityAgentPage() {
   const [severityFilter, setSeverityFilter] = useState<string>('ALL');
 
   useEffect(() => {
-    RepositoryService.listRepositories().then((res) => {
-      setRepositories(res.data);
-      if (res.data.length > 0) {
-        setSelectedRepoId(res.data[0].id);
-      }
-    });
+    RepositoryService.listRepositories()
+      .then((res) => {
+        const repoList = res?.data || [];
+        setRepositories(repoList);
+        if (repoList.length > 0) {
+          setSelectedRepoId(repoList[0].id);
+        } else {
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        setLoading(false);
+      });
   }, []);
 
   const fetchReportData = useCallback(async (repoId: string) => {
     try {
       setLoading(true);
       const res = await SecurityAgentService.getLatestReport(repoId);
-      setReport(res.data);
+      setReport(res?.data || null);
     } catch {
-      // Ignore if no report exists yet
+      setReport(null);
     } finally {
       setLoading(false);
     }
@@ -87,17 +95,19 @@ export default function SecurityAgentPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <select
-                value={selectedRepoId}
-                onChange={(e) => setSelectedRepoId(e.target.value)}
-                className="rounded-xl border border-border bg-card px-3 py-2 text-xs text-foreground font-semibold focus:border-primary focus:outline-none"
-              >
-                {repositories.map((repo) => (
-                  <option key={repo.id} value={repo.id}>
-                    {repo.full_name}
-                  </option>
-                ))}
-              </select>
+              {repositories.length > 0 && (
+                <select
+                  value={selectedRepoId}
+                  onChange={(e) => setSelectedRepoId(e.target.value)}
+                  className="rounded-xl border border-border bg-card px-3 py-2 text-xs text-foreground font-semibold focus:border-primary focus:outline-none"
+                >
+                  {repositories.map((repo) => (
+                    <option key={repo.id} value={repo.id}>
+                      {repo.full_name}
+                    </option>
+                  ))}
+                </select>
+              )}
 
               <button
                 onClick={handleTriggerScan}
@@ -113,6 +123,15 @@ export default function SecurityAgentPage() {
           {loading ? (
             <div className="flex h-96 items-center justify-center">
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            </div>
+          ) : repositories.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-dashed border-border bg-card/40">
+              <FolderGit2 className="h-12 w-12 text-slate-600 mb-3" />
+              <h3 className="text-lg font-bold text-foreground">No Repositories Connected</h3>
+              <p className="text-xs text-slate-400 mt-1 mb-4 max-w-sm">Connect a repository to perform SAST security audits and CVSS vulnerability scoring.</p>
+              <Link href="/repositories" className="px-4 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 transition">
+                Go to Repositories &rarr;
+              </Link>
             </div>
           ) : report ? (
             <div className="space-y-8">
@@ -165,7 +184,13 @@ export default function SecurityAgentPage() {
                 )}
               </div>
             </div>
-          ) : null}
+          ) : (
+            <div className="p-8 text-center rounded-2xl border border-dashed border-border bg-card/40 space-y-3">
+              <ShieldAlert className="h-10 w-10 text-slate-500 mx-auto" />
+              <h3 className="text-base font-bold text-foreground">No Security Report Yet</h3>
+              <p className="text-xs text-slate-400">Click &quot;Run Security Agent Scan&quot; above to start scanning for vulnerabilities.</p>
+            </div>
+          )}
         </main>
       </div>
     </ProtectedRoute>

@@ -1,11 +1,101 @@
 'use client';
 
-import React from 'react';
-import { ShieldCheck, Search, Bell, Building2, User, LogOut, Layers, Code, ShieldAlert, FileText, MessageSquare, LayoutDashboard, FolderGit2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import {
+  ShieldCheck,
+  Search,
+  Bell,
+  LogOut,
+  Layers,
+  Code,
+  ShieldAlert,
+  FileText,
+  MessageSquare,
+  LayoutDashboard,
+  FolderGit2,
+} from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
+import { NotificationDropdown } from './notification-dropdown';
+import { DashboardService } from '@/services/dashboard.service';
+import { NotificationAlert } from '@/types/dashboard';
 
 export const DashboardHeader: React.FC = () => {
   const { user, logout } = useAuth();
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationAlert[]>([
+    {
+      id: '1',
+      title: 'SQL Injection Finding',
+      message: 'Critical SQL Injection detected in authentication module query.',
+      severity: 'CRITICAL',
+      type: 'VULNERABILITY',
+      timestamp: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      read: false,
+    },
+    {
+      id: '2',
+      title: 'Report Export Complete',
+      message: 'Executive Security Audit PDF generated successfully.',
+      severity: 'INFO',
+      type: 'REPORT_EXPORTED',
+      timestamp: new Date(Date.now() - 3600000).toISOString(),
+      created_at: new Date(Date.now() - 3600000).toISOString(),
+      read: false,
+    },
+    {
+      id: '3',
+      title: 'SAST Scan Suite',
+      message: 'Multi-agent scan suite completed with 92% pass rate.',
+      type: 'SCAN_COMPLETE',
+      severity: 'HIGH',
+      timestamp: new Date(Date.now() - 7200000).toISOString(),
+      created_at: new Date(Date.now() - 7200000).toISOString(),
+      read: false,
+    },
+  ]);
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    DashboardService.getSummary()
+      .then((res) => {
+        if (res.data?.notifications && res.data.notifications.length > 0) {
+          setNotifications(res.data.notifications);
+        }
+      })
+      .catch(() => {
+        // Fallback default notifications
+      });
+  }, []);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setNotificationsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const handleMarkAllAsRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  const handleClearAll = () => {
+    setNotifications([]);
+  };
+
+  const handleNotificationClick = (notification: NotificationAlert) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n))
+    );
+  };
 
   const navItems = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -22,23 +112,27 @@ export const DashboardHeader: React.FC = () => {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-8">
         {/* Logo & Navigation */}
         <div className="flex items-center gap-6">
-          <a href="/" aria-label="CodeGuardian AI Homepage" className="flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-primary rounded-lg focus-visible:outline-none">
+          <Link
+            href="/dashboard"
+            aria-label="CodeGuardian AI Homepage"
+            className="flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-primary rounded-lg focus-visible:outline-none"
+          >
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <span className="font-bold text-lg tracking-tight text-foreground">CodeGuardian AI</span>
-          </a>
+          </Link>
 
           <nav aria-label="Main Navigation" className="hidden md:flex items-center gap-1.5 border-l border-border pl-4">
             {navItems.map((item, idx) => (
-              <a
+              <Link
                 key={idx}
                 href={item.href}
                 className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-foreground hover:bg-accent transition focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
               >
                 <item.icon className="h-3.5 w-3.5 text-primary" />
                 <span>{item.label}</span>
-              </a>
+              </Link>
             ))}
           </nav>
         </div>
@@ -58,16 +152,33 @@ export const DashboardHeader: React.FC = () => {
         </div>
 
         {/* Right Action Icons & User Profile Menu */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 relative" ref={dropdownRef}>
           <button
+            onClick={() => setNotificationsOpen(!notificationsOpen)}
             aria-label="Notifications"
-            className="relative rounded-lg border border-border bg-background p-2 text-slate-400 hover:text-foreground hover:bg-accent transition focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+            className={`relative rounded-lg border border-border p-2 transition focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
+              notificationsOpen
+                ? 'bg-primary/10 text-primary border-primary/40'
+                : 'bg-background text-slate-400 hover:text-foreground hover:bg-accent'
+            }`}
           >
             <Bell className="h-4 w-4" />
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-              3
-            </span>
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm shadow-red-500/50">
+                {unreadCount}
+              </span>
+            )}
           </button>
+
+          {/* Interactive Dropdown Panel */}
+          <NotificationDropdown
+            notifications={notifications}
+            isOpen={notificationsOpen}
+            onClose={() => setNotificationsOpen(false)}
+            onMarkAllAsRead={handleMarkAllAsRead}
+            onClearAll={handleClearAll}
+            onNotificationClick={handleNotificationClick}
+          />
 
           {user ? (
             <div className="flex items-center gap-3 border-l border-border pl-3">
@@ -85,9 +196,12 @@ export const DashboardHeader: React.FC = () => {
               </button>
             </div>
           ) : (
-            <a href="/login" className="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none">
+            <Link
+              href="/login"
+              className="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+            >
               Sign In
-            </a>
+            </Link>
           )}
         </div>
       </div>

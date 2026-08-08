@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import Link from 'next/link';
 import { DashboardHeader } from '@/components/layout/dashboard-header';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { ChatSidebar } from '@/components/chat/chat-sidebar';
@@ -9,7 +10,7 @@ import { ChatService } from '@/services/chat.service';
 import { RepositoryService } from '@/services/repository.service';
 import { Repository } from '@/types/repository';
 import { ChatSessionResponse, ChatMessageResponse } from '@/types/chat';
-import { MessageSquare, Send, Loader2 } from 'lucide-react';
+import { MessageSquare, Send, Loader2, FolderGit2 } from 'lucide-react';
 
 export default function ChatPage() {
   const [repositories, setRepositories] = useState<Repository[]>([]);
@@ -22,31 +23,42 @@ export default function ChatPage() {
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
-    RepositoryService.listRepositories().then((res) => {
-      setRepositories(res.data);
-      if (res.data.length > 0) {
-        setSelectedRepoId(res.data[0].id);
-      }
-    });
+    RepositoryService.listRepositories()
+      .then((res) => {
+        const repoList = res?.data || [];
+        setRepositories(repoList);
+        if (repoList.length > 0) {
+          setSelectedRepoId(repoList[0].id);
+        } else {
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        setLoading(false);
+      });
   }, []);
 
   const fetchSessions = useCallback(async (repoId: string) => {
     try {
       setLoading(true);
       const res = await ChatService.listSessions(repoId);
-      setSessions(res.data);
+      const sessionList = res?.data || [];
+      setSessions(sessionList);
 
-      if (res.data.length > 0) {
-        const first = await ChatService.getSession(res.data[0].id);
-        setActiveSession(first.data);
+      if (sessionList.length > 0) {
+        const first = await ChatService.getSession(sessionList[0].id);
+        setActiveSession(first?.data || null);
       } else {
         // Create initial session
         const created = await ChatService.createSession(repoId, 'Initial Repository Analysis');
-        setSessions([created.data]);
-        setActiveSession(created.data);
+        if (created?.data) {
+          setSessions([created.data]);
+          setActiveSession(created.data);
+        }
       }
     } catch {
-      // Ignore
+      setSessions([]);
+      setActiveSession(null);
     } finally {
       setLoading(false);
     }
@@ -61,7 +73,9 @@ export default function ChatPage() {
   const handleSelectSession = async (sessionId: string) => {
     try {
       const res = await ChatService.getSession(sessionId);
-      setActiveSession(res.data);
+      if (res?.data) {
+        setActiveSession(res.data);
+      }
     } catch {
       // Ignore
     }
@@ -71,8 +85,10 @@ export default function ChatPage() {
     if (!selectedRepoId) return;
     try {
       const res = await ChatService.createSession(selectedRepoId, `Analysis ${sessions.length + 1}`);
-      setSessions([res.data, ...sessions]);
-      setActiveSession(res.data);
+      if (res?.data) {
+        setSessions((prev) => [res.data, ...prev]);
+        setActiveSession(res.data);
+      }
     } catch {
       // Ignore
     }
@@ -96,11 +112,13 @@ export default function ChatPage() {
         created_at: new Date().toISOString(),
       };
 
-      setActiveSession((prev) => prev ? { ...prev, messages: [...prev.messages, userMsg] } : prev);
+      setActiveSession((prev) => (prev ? { ...prev, messages: [...prev.messages, userMsg] } : prev));
 
       const res = await ChatService.sendMessage(activeSession.id, textToSend);
 
-      setActiveSession((prev) => prev ? { ...prev, messages: [...prev.messages, res.data] } : prev);
+      if (res?.data) {
+        setActiveSession((prev) => (prev ? { ...prev, messages: [...prev.messages, res.data] } : prev));
+      }
     } catch (err: any) {
       alert(err.message || 'Failed to send message.');
     } finally {
@@ -127,23 +145,34 @@ export default function ChatPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <select
-                value={selectedRepoId}
-                onChange={(e) => setSelectedRepoId(e.target.value)}
-                className="rounded-xl border border-border bg-card px-3 py-2 text-xs text-foreground font-semibold focus:border-primary focus:outline-none"
-              >
-                {repositories.map((repo) => (
-                  <option key={repo.id} value={repo.id}>
-                    {repo.full_name}
-                  </option>
-                ))}
-              </select>
+              {repositories.length > 0 && (
+                <select
+                  value={selectedRepoId}
+                  onChange={(e) => setSelectedRepoId(e.target.value)}
+                  className="rounded-xl border border-border bg-card px-3 py-2 text-xs text-foreground font-semibold focus:border-primary focus:outline-none"
+                >
+                  {repositories.map((repo) => (
+                    <option key={repo.id} value={repo.id}>
+                      {repo.full_name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
 
           {loading ? (
             <div className="flex h-96 items-center justify-center">
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            </div>
+          ) : repositories.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-dashed border-border bg-card/40">
+              <FolderGit2 className="h-12 w-12 text-slate-600 mb-3" />
+              <h3 className="text-lg font-bold text-foreground">No Repositories Connected</h3>
+              <p className="text-xs text-slate-400 mt-1 mb-4 max-w-sm">Connect a repository to chat with your codebase using AI and RAG.</p>
+              <Link href="/repositories" className="px-4 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 transition">
+                Go to Repositories &rarr;
+              </Link>
             </div>
           ) : (
             <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-6 items-start">

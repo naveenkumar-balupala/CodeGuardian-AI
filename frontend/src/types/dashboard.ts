@@ -61,6 +61,8 @@ export interface NotificationAlert {
   severity: string;
   timestamp: string;
   read: boolean;
+  type?: string;
+  created_at?: string;
 }
 
 export interface DashboardSummary {
